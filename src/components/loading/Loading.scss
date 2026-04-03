@@ -1,0 +1,29 @@
+.spinner {
+  width:30px;
+  aspect-ratio: 1;
+  background: #FFFFFF;
+  display: grid;
+  transform-origin: top right;
+  animation: l6-0 1s infinite linear;
+}
+.spinner::before,
+.spinner::after {
+  content: "";
+  grid-area: 1/1;
+  background: #93c5fd;
+  transform-origin: inherit;
+  animation: inherit;
+  animation-name: l6-1;
+}
+.spinner::after {
+  background:#2B9BED;
+  --s:180deg;
+}
+@keyframes l6-0 {
+  70%,
+  100% {transform: rotate(360deg)}
+}
+@keyframes l6-1 {
+  30% {transform: rotate(var(--s,90deg))}
+  70% {transform: rotate(0)}
+}

@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --primary-color: #0C5D9F;
+  --primary-color-hover: #3D7DB2;
+  --secondary-color: #FFFFFF;
+  --component-color: #010602;
+  --table-text-color: #000;
+  --table-border-color: #EBEBEB;
+  --text-color: #000;
+  --highlight-bg-color: #C6C6C6;
+  --hyper-text-color: #000584;
+  --map-popup-bg-color: #3B82F6;
+  --main-bg-color: #F1F2F6;
+  --range-button-color-hover: #F3F3F3;
+  --current-date-highlight-bg-color: #F0F2F5;
+  --text-chart-table-color: #124692;
+  --fade-primary-color: rgba(12, 93, 159, 0.13);
+}
+
+body {
+  font-family: "Noto Sans Thai", sans-serif !important;
+  margin: 0;
+  padding: 0;
+}
