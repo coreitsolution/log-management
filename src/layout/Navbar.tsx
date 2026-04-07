@@ -58,8 +58,8 @@ const Navbar = ({ open, setOpen }: NavbarProps) => {
       label: "รายงานภาพรวม",
       subMenu: [
         { label: "รายงานจุดตรวจ", path: "/overall-checkpoints" },
-        { label: "แผนที่", path: "/" },
-        { label: "รายงาน", path: "/" },
+        { label: "แผนที่", path: "/overall-map" },
+        { label: "รายงาน", path: "/overall-report" },
       ]
     },
     {

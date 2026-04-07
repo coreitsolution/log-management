@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import L, { Map as LeafletMap, LatLngBounds, Polyline } from 'leaflet';
 
 // Types
-import type { SearchResult } from '../types/common';
+import type { SearchResult } from '../types/map';
+import type { OverallMapDetail } from "../types/common";
 
 // Utils
 import { parseCoordinates, parseCoordinatesWith2Param } from '../utils/coordinates';
@@ -111,6 +112,57 @@ export const useMapSearch = (
     }
   }, [map, markerManager]);
 
+  const showOverallWithList = useCallback(async (query: OverallMapDetail[]) => {
+    setSearchResults([])
+    if (!map) return
+    
+    setIsSearching(true)
+    setSearchError(null)
+    
+    try {
+      const coordinatesList = [];
+      const bounds = new LatLngBounds([]);
+      const locationList: OverallMapDetail[] = [];
+
+      for (const q of query) {
+        const coordinates = parseCoordinates(`${q.latitude}, ${q.longitude}`)
+        if (coordinates) {
+          coordinatesList.push(coordinates);
+          locationList.push({
+            ...q,
+            latLng: coordinates,
+          });
+          bounds.extend(coordinates);
+        }
+      }
+
+      if (coordinatesList.length > 0) {
+        const result: SearchResult[] = coordinatesList.map(coordinates => ({
+          name: `${coordinates.lat}, ${coordinates.lng}`,
+          location: coordinates
+        }));
+        setSearchResults(result)
+        await markerManager.createOverallMarkerWithList(locationList)
+
+        if (bounds.isValid()) {
+          if (coordinatesList.length === 1) {
+            map.setView(coordinatesList[0], 15);
+          } 
+          else {
+            map.fitBounds(bounds, { padding: [30, 30] });
+          }
+        }
+      }
+    } 
+    catch (error) {
+      setSearchError('Error searching for place')
+      setSearchResults([])
+    } 
+    finally {
+      setIsSearching(false)
+    }
+  }, [map, markerManager]);
+
   return {
     searchPlace,
     searchPlaceWithList,
@@ -119,5 +171,6 @@ export const useMapSearch = (
     searchError,
     clearSearchPlaces,
     clearPlaceMarkerWithLocation,
+    showOverallWithList,
   }
 }

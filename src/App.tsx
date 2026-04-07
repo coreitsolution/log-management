@@ -17,6 +17,8 @@ import ChartInternalNsb from './pages/ChartInternalNsb';
 import ChartExternalPolice from './pages/ChartExternalPolice';
 import ChartTopUsers from './pages/ChartTopUsers';
 import OverallCheckpoints from './pages/OverallCheckpoints';
+import OverallMap from './pages/OverallMap';
+import OverallReport from './pages/OverallReport';
 
 function App() {
   return (
@@ -38,6 +40,8 @@ function App() {
         <Route path="/chart-top-users" element={<ChartTopUsers />} />
         {/* Overall */}
         <Route path="/overall-checkpoints" element={<OverallCheckpoints />} />
+        <Route path="/overall-map" element={<OverallMap />} />
+        <Route path="/overall-report" element={<OverallReport />} />
       </Route>
     </Routes>
   )

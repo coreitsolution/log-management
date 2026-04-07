@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react"
 
 // Types
-import type { MapProps } from "../../types/common";
+import type { MapProps } from "../../types/map";
 import { DEFAULT_DIMENSIONS, DEFAULT_MAP_CONFIG } from "../../constants/map";
 import { useMap } from "../../hooks/useOpenStreetMap"
 
@@ -16,17 +16,27 @@ const BaseMap = ({
   mapTypeControl = DEFAULT_MAP_CONFIG.mapTypeControl,
   streetViewControl = DEFAULT_MAP_CONFIG.streetViewControl,
   fullscreenControl = DEFAULT_MAP_CONFIG.fullscreenControl,
+  currentLocation = DEFAULT_MAP_CONFIG.currentLocation,
+  searchFilter = DEFAULT_MAP_CONFIG.searchFilter,
+  mapStyle = DEFAULT_MAP_CONFIG.mapStyle,
   onMapLoad,
+  onSearchFilterClick,
+  showFilter,
 }: MapProps) => {
 
   const mapRef = useRef<HTMLDivElement>(null)
+
   const { initMap, isLoading, error, mapInstance } = useMap({
     panControl: panControl,
     zoomControl: zoomControl, 
     mapTypeControl: mapTypeControl,
     streetViewControl: streetViewControl,
-    fullscreenControl: fullscreenControl
-  })
+    fullscreenControl: fullscreenControl,
+    currentLocation: currentLocation,
+    searchFilter: searchFilter,
+    mapStyle: mapStyle,
+    showFilter: showFilter,
+  }, onSearchFilterClick);
   const [isFullScreen, setIsFullScreen] = useState(false)
 
   useEffect(() => {

@@ -9,7 +9,8 @@ export const DEFAULT_MAP_CONFIG = {
   enableSearch: false,
   cameraControl: false,
   currentLocation: false,
-  realtimeCamera: false,
+  searchFilter: false,
+  mapStyle: false,
 }
 
 export const DEFAULT_DIMENSIONS = {

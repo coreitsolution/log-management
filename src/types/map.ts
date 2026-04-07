@@ -13,6 +13,11 @@ export interface MapConfig {
   mapTypeControl?: boolean
   streetViewControl?: boolean
   fullscreenControl?: boolean
+  currentLocation?: boolean
+  searchFilter?: boolean
+  mapStyle?: boolean
+  showFilter?: boolean
+  onSearchFilterClick?: () => void
 }
 
 export interface MapProps {
@@ -24,7 +29,11 @@ export interface MapProps {
   streetViewControl?: boolean
   fullscreenControl?: boolean
   currentLocation?: boolean
+  searchFilter?: boolean
+  mapStyle?: boolean
   onMapLoad?: (mapInstance: LeafletMap | null) => void
+  onSearchFilterClick?: () => void
+  showFilter?: boolean
 }
 
 export interface SearchResult {

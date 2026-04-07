@@ -2,6 +2,16 @@ import { useState, useCallback } from 'react';
 import L, { Map as LeafletMap, Marker, divIcon } from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 
+// Types
+import type { OverallMapDetail } from "../types/common";
+
+// Icons
+import CameraIcon from "../assets/icons/camera.png";
+import RightArrow from "../assets/icons/right-arrow.png";
+
+// Constants
+import { STATUS_OPTIONS } from "../constants/dropdown";
+
 export const useMarkerManager = (map: LeafletMap | null) =>{
   const [markers, setMarkers] = useState<Marker[]>([]);
 
@@ -110,6 +120,73 @@ export const useMarkerManager = (map: LeafletMap | null) =>{
     setMarkers(newMarkers);
   };
 
+  const createOverallMarkerWithList = (locations: OverallMapDetail[]) => {
+    if (!map) return;
+    clearMarkers();
+
+    const newMarkers: Marker[] = [];
+
+    for (let i = 0; i < locations.length; i++) {
+      const loc = locations[i];
+
+      const sortStatus = loc.camera_list.sort((a, b) => a.status_id - b.status_id);
+      const color = STATUS_OPTIONS.find((item) => item.id === sortStatus[0]?.status_id)?.color ?? "#FFFFFF";
+    
+      let htmlContent = `
+        <div style="
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          cursor: pointer;
+        ">
+          <!-- rectangle -->
+          <div style="
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background-color: ${color};
+            font-weight: 600;
+            color: black;
+          ">
+            ${loc.camera_list.length}
+          </div>
+
+          <!-- triangle -->
+          <div style="
+            width: 0;
+            height: 0;
+            margin-top: -1px;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid ${color};
+          "></div>
+        </div>
+      `;
+
+      const marker = L.marker(loc.latLng ?? [0, 0], {
+        icon: divIcon({
+          html: htmlContent,
+          className: '',
+          iconSize: [30, 40],
+          iconAnchor: [15, 36],
+        }),
+      });
+
+      createOverallPopup(marker, loc);
+
+      marker.on("click", () => {
+        marker.openPopup();
+      });
+      marker.addTo(map);
+      newMarkers.push(marker);
+    };
+
+    setMarkers(newMarkers);
+  };
+
   const createToolTip = (marker: L.Marker<any>, latLng: LatLngExpression) => {
     const newLatLng = L.latLng(latLng);
     return marker.bindTooltip(
@@ -140,11 +217,160 @@ export const useMarkerManager = (map: LeafletMap | null) =>{
     );
   }
 
+  const createOverallPopup = (marker: L.Marker<any>, detail: OverallMapDetail) => {
+    const cameraLength = detail.camera_list.length;
+    const sortStatus = detail.camera_list.sort((a, b) => a.status_id - b.status_id);
+
+    return marker.bindPopup(
+      `<div style="display: flex; padding: 2px; width: 700px; min-height: 500px; font-family: 'Noto Sans Thai', sans-serif;">
+        <div style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+          <div style="display: flex; justify-content: start; align-items: start; gap: 10px">
+            <img src="${CameraIcon}" alt="Camera" style="width: 20px; height: 15px; margin-top: 5px;"/>
+            <div style="display: flex; flex-direction: column; justify-content: center; align-items: start;">
+              <label style="font-weight: bold; font-size: 20px; color: var(--primary-color);">จุดตรวจ : ${detail.checkpoint_name}</label>
+              <p style="color: var(--primary-color); margin-top: 0px;">รวม ${cameraLength} จุด</p>
+            </div>
+          </div>
+          <div style="padding: 0px 5px;">
+            <div style="padding: 10px 15px; background-color: #F0F2F5; width: 100%; height: 80px">
+              <label style="color: #81898E; font-size: 12px;">โครงสร้างพื้นที่</label>
+
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                ${detail.area_structure
+                  .map((item, index) => {
+                    const isLast = index === detail.area_structure.length - 1;
+
+                    return `
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="color: var(--primary-color); font-size: 20px; font-weight: 500;">
+                          ${item.area_name}
+                        </span>
+
+                        ${
+                          !isLast
+                            ? `<img 
+                                src="${RightArrow}" 
+                                style="width: 12px; height: 12px;" 
+                              />`
+                            : ""
+                        }
+                      </div>
+                    `;
+                  })
+                  .join("")}
+              </div>
+            </div>
+          </div>
+          <div style="padding: 0px 5px;">
+            <div style="padding: 10px 15px; background-color: #F0F2F5; width: 100%; min-height: 80px;">
+              <label style="color: #81898E; font-size: 12px; display: block;">
+                สถานะ
+              </label>
+
+              <div style="display: flex; flex-wrap: wrap; justify-content: start; align-items: center; gap: 20px; width: 100%;">
+                ${
+                  Object.values(
+                    sortStatus.reduce((acc, item) => {
+                      const key = item.status_id;
+
+                      if (!acc[key]) {
+                        acc[key] = {
+                          status_id: item.status_id,
+                          status_name: item.status_name,
+                          count: 0,
+                        };
+                      }
+
+                      acc[key].count += 1;
+                      return acc;
+                    }, {} as Record<number, { status_id: number; status_name: string; count: number }>)
+                  )
+                    .map((item) => {
+                      const cameraColor =
+                        STATUS_OPTIONS.find((opt) => opt.id === Number(item.status_id))?.color ?? "#FFFFFF";
+
+                      return `
+                        <div style="display: flex; justify-content: start; align-items: center; gap: 10px; margin-top: 10px;">
+                          <div style="width: 20px; height: 20px; background-color: ${cameraColor}; border-radius: 50%;"></div>
+                          
+                          <label style="color: var(--primary-color); font-size: 20px; font-weight: 500;">
+                            ${item.status_name}<span> : ${item.count}</span>
+                          </label>
+                        </div>
+                      `;
+                    })
+                    .join("")
+                }
+              </div>
+            </div>
+          </div>
+          <div style="padding: 0px 5px;">
+            <div style="display: flex; flex-direction: column; gap: 5px; width: 100%;">
+              <label style="color: var(--primary-color); font-size: 16px;">รายการจุดตรวจ :</label>
+              <div style="max-height: 200px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  
+                  <thead>
+                    <tr style="background-color: var(--primary-color); color: white; font-size: 16px;">
+                      <th style="position: sticky; top: 0; background-color: var(--primary-color); text-align: center; width: 40%; height: 60px; z-index: 1;">
+                        จุดตรวจ
+                      </th>
+                      <th style="position: sticky; top: 0; background-color: var(--primary-color); text-align: center; width: 30%; z-index: 1;">
+                        สถานะ
+                      </th>
+                      <th style="position: sticky; top: 0; background-color: var(--primary-color); text-align: center; width: 20%; z-index: 1;">
+                        เส้นทาง
+                      </th>
+                      <th style="position: sticky; top: 0; background-color: var(--primary-color); text-align: center; width: 10%; z-index: 1;">
+                        เลน
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    ${
+                      sortStatus
+                        .map((item, index) => {
+                          const cameraColor =
+                            STATUS_OPTIONS.find((opt) => opt.id === Number(item.status_id))?.color ?? "#FFFFFF";
+                          return `
+                            <tr key="${item.camera_name}_${index}" style="border-bottom: 1px solid #DBDCDE; font-size: 16px; color: var(--primary-color); height: 50px;">
+                              <td style="padding: 0px 10px;">${item.camera_name}</td>
+
+                              <td style="padding: 0px 10px; vertical-align: middle;">
+                                <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                                  <div style="width: 20px; height: 20px; background-color: ${cameraColor}; border-radius: 50%;"></div>
+                                  <span>${item.status_name}</span>
+                                </div>
+                              </td>
+
+                              <td style="padding: 0px 10px;">${item.route}</td>
+                              <td style="text-align: center;">${item.lane === 1 ? "ออก" : "เข้า"}</td>
+                            </tr>
+                          `;
+                        }).join("")
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`,
+      {
+        offset: [0, -30],
+        closeButton: true,
+        maxWidth: 900,
+      }
+    )
+  }
+
   return {
     clearMarkers,
     markers,
     clearMarkerByLocation,
     createMarker,
     createMarkerWithList,
+    createOverallMarkerWithList,
   };
 };

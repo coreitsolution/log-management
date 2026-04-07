@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Map as LeafletMap, point } from 'leaflet';
+import { Map as LeafletMap } from 'leaflet';
 import dayjs from "dayjs";
 
 // Material UI

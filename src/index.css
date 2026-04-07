@@ -16,6 +16,14 @@
   --current-date-highlight-bg-color: #F0F2F5;
   --text-chart-table-color: #124692;
   --fade-primary-color: rgba(12, 93, 159, 0.13);
+  --percent-text-color: #4A4A4A;
+
+  /* Chart Color */
+  --status-all: #93C3EB;
+  --status-device-disable: #9E9E9E;
+  --status-network-outage: #F68634;
+  --status-device-outage: #FFCA29;
+  --status-device-normal: #80B213;
 }
 
 body {

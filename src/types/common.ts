@@ -1,3 +1,5 @@
+import type { LatLngExpression } from 'leaflet';
+
 export interface AgencyUsage {
   id: number;
   agency_id: number;
@@ -107,25 +109,25 @@ export interface UsageCount {
 
 export interface OverallCheckpointType {
   id: number;
-  database_status: number,
-  wifi_status: number,
-  checkpoint_uid: string,
-  checkpoint_name: string,
-  camera_uid: string,
-  camera_name: string,
-  station_id: number,
-  station_name: string,
-  area_id: number,
-  area_name: string,
-  province_id: number,
-  province_name: string,
-  district_id: number,
-  district_name: string,
-  subdistrict_id: number,
-  subdistrict_name: string,
-  road: string,
-  route: number,
-  project: string,
+  database_status: number;
+  wifi_status: number;
+  checkpoint_uid: string;
+  checkpoint_name: string;
+  camera_uid: string;
+  camera_name: string;
+  station_id: number;
+  station_name: string;
+  area_id: number;
+  area_name: string;
+  province_id: number;
+  province_name: string;
+  district_id: number;
+  district_name: string;
+  subdistrict_id: number;
+  subdistrict_name: string;
+  road: string;
+  route: number;
+  project: string;
 }
 
 export type ColumnOption = {
@@ -133,3 +135,79 @@ export type ColumnOption = {
   label: string;
   checked: boolean;
 };
+
+export interface OverallMapDetail {
+  checkpoint_uid: string;
+  checkpoint_name: string;
+  latitude: number;
+  longitude: number;
+  area_structure: AreaStructure[];
+  status_id: number;
+  status_name: string;
+  camera_list: CameraList[];
+  latLng?: LatLngExpression;
+}
+
+export interface AreaStructure {
+  area_id: number;
+  area_name: string;
+}
+
+export interface CameraList {
+  camera_uid: string;
+  camera_name: string;
+  status_id: number;
+  status_name: string;
+  route: string;
+  lane: number;
+}
+
+export interface OverallReportType {
+  police_division: string;
+  police_division_name: string;
+  total: number;
+  normal: number;
+  normal_percent: number;
+  device: number;
+  device_percent: number;
+  network: number;
+  network_percent: number;
+  disable: number;
+  disable_percent: number;
+}
+
+export interface OverallReportChartType {
+  date: string;
+  total: number;
+  normal: number;
+  normal_percent: number;
+  device: number;
+  device_percent: number;
+  network: number;
+  network_percent: number;
+  disable: number;
+  disable_percent: number;
+}
+
+export interface OverallWeekReportType {
+  rows: OverallReportType[];
+  charts: OverallReportChartType[];
+}
+
+export interface OverallReportDetail {
+  checkpoint_uid: string;
+  checkpoint_name: string;
+  camera_uid: string;
+  camera_name: string;
+  station_id: number;
+  station_name: string;
+  area_id: number;
+  area_name: string;
+  province_id: number;
+  province_name: string;
+  project: string;
+  status_id: number;
+  date_count_error: number;
+  date_count_error_percent: number;
+  remark: string;
+}
