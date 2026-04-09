@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState, useCallback } from "react";
 import dayjs from "dayjs";
 import { useLocation } from "react-router-dom";
 import buddhistEra from "dayjs/plugin/buddhistEra";
+import { useSelector } from 'react-redux';
 
 // Material UI
 import Box from "@mui/material/Box";
@@ -22,15 +22,14 @@ import MainTitle from "../components/main-title/MainTitle";
 import AutoComplete from "../components/auto-complete/AutoComplete";
 import DatePickerBuddhist from "../components/date-picker-buddhist/DatePickerBuddhist";
 import PaginationComponent from "../components/pagination/Pagination";
-import DetailsDialog from "../components/details-dialog/DetailsDialog";
 import TextBox from "../components/text-box/TextBox";
 import LocationUsage from "../components/location-usage/LocationUsage";
+import Loading from "../components/loading/Loading";
 
 // Icons
 import ClearIcon from "../assets/icons/clear.png";
 import ExportExcelIcon from "../assets/icons/export-excel.png";
 import ExportPdfIcon from "../assets/icons/export-pdf.png";
-import InformationIcon from "../assets/icons/information.png";
 
 // Constants
 import { ROWS_PER_PAGE_OPTIONS } from "../constants/dropdown";
@@ -40,56 +39,59 @@ import type { LogUsage } from "../types/common";
 import type { LogUsagePdfData } from "../types/pdf";
 
 // Utils
-import { formatNumber } from "../utils/commonFunctions";
 import { exportExcel } from "../utils/exportData";
+import { buildOptions } from "../utils/commonFunctions";
 
 // PDF
 import {
   downloadStatisticUsageLogPdf,
-  generateStatisticUsageLogPdfBlob,
 } from "../pdf/StatisticUsageLogPdf";
 
-// Mock Data
-import { mockLogUsage } from "../mocks/mockLogUsage";
+// Hooks
+import usePageTitle from "../hooks/usePageTitle";
+
+// Store
+import type { RootState } from "../store/store";
+
+// API
+import { getLogUsage } from "../features/usage-data/api/UsageDataApi";
 
 dayjs.extend(buddhistEra);
 
 interface FormData {
   name: string;
   pid_or_water_mark: string;
-  agency_id: number;
-  bh_id: number;
-  bk_id: number;
-  org_id: number;
+  agency_id: string;
+  bh_id: string;
+  bk_id: string;
+  org_id: string;
   start_date_time: Date | null;
   end_date_time: Date | null;
 }
 
-type Props = {}
-
-const StatisticUsageLog = (props: Props) => {
+const StatisticUsageLog = () => {
   const location = useLocation();
+  usePageTitle("Log การใช้งาน");
 
   // State
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Options
-  const [agencyOptions, setAgencyOptions] = useState<{ label: string, value: number }[]>([]);
-  const [bhOptions, setBhOptions] = useState<{ label: string, value: number }[]>([]);
-  const [bkOptions, setBkOptions] = useState<{ label: string, value: number }[]>([]);
-  const [orgOptions, setOrgOptions] = useState<{ label: string, value: number }[]>([]);
+  const [agencyOptions, setAgencyOptions] = useState<{ label: string, value: string }[]>([]);
+  const [bhOptions, setBhOptions] = useState<{ label: string, value: string }[]>([]);
+  const [bkOptions, setBkOptions] = useState<{ label: string, value: string }[]>([]);
+  const [orgOptions, setOrgOptions] = useState<{ label: string, value: string }[]>([]);
 
   // Data
   const [totalItems, setTotalItems] = useState(0);
   const [totalUsage, setTotalUsage] = useState(0);
-  const [rows, setRows] = useState<LogUsage[]>(mockLogUsage);
+  const [rows, setRows] = useState<LogUsage[]>([]);
   const [selectedData, setSelectedData] = useState<{latitude: number, longitude: number}[]>([]);
 
   // Pagination
   const [page, setPage] = useState(1);
-  const [pageInput, setPageInput] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalData, setTotalData] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(
     ROWS_PER_PAGE_OPTIONS[0],
   );
@@ -115,22 +117,40 @@ const StatisticUsageLog = (props: Props) => {
     return {
       name: "",
       pid_or_water_mark: "",
-      agency_id: 0,
-      bh_id: 0,
-      bk_id: 0,
-      org_id: 0,
+      agency_id: "0",
+      bh_id: "0",
+      bk_id: "0",
+      org_id: "0",
       start_date_time: dayjs().toDate(),
       end_date_time: dayjs().toDate(),
     };
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    clearErrors,
-  } = useForm();
+  // Slice
+  const { agency, bh, bk, org } = useSelector((state: RootState) => state.dropdown);
+
+  useEffect(() => {
+    setAgencyOptions(buildOptions(agency, "ทุกหน่วยงาน"));
+    setBhOptions(buildOptions(bh, "ทุกกองบัญชาการ"));
+    setBkOptions(buildOptions(bk, "ทุกกองบังคับการ"));
+    setOrgOptions(buildOptions(org, "ทุกกองกำกับการ"));
+  }, [agency, bh, bk, org]);
+
+  useEffect(() => {
+    fetchData();
+  }, [formData]);
+
+  const fetchData = useCallback(
+    async () => {
+      setIsLoading(true);
+      const res = await getLogUsage();
+      setRows(res.data);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500)
+    },
+    []
+  );
 
   const handleTextChange = (key: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -150,7 +170,6 @@ const StatisticUsageLog = (props: Props) => {
       ...prevState,
       [key]: date,
     }));
-    setValue(key, date);
   };
 
   const handlePageChange = async (
@@ -182,10 +201,10 @@ const StatisticUsageLog = (props: Props) => {
     setFormData({
       name: "",
       pid_or_water_mark: "",
-      agency_id: 0,
-      bh_id: 0,
-      bk_id: 0,
-      org_id: 0,
+      agency_id: "0",
+      bh_id: "0",
+      bk_id: "0",
+      org_id: "0",
       start_date_time: dayjs().toDate(),
       end_date_time: dayjs().toDate(),
     });
@@ -231,13 +250,13 @@ const StatisticUsageLog = (props: Props) => {
       pid_or_water_mark: formData.pid_or_water_mark || "-",
       name: formData.name || "-",
       agency_id: formData.agency_id,
-      agency_name: formData.agency_id === 0 ? "ทั้งหมด" : agencyOptions.find(option => option.value === formData.agency_id)?.label || "-",
+      agency_name: formData.agency_id === "0" ? "ทั้งหมด" : agencyOptions.find(option => option.value === formData.agency_id)?.label || "-",
       bh_id: formData.bh_id,
-      bh_name: formData.bh_id === 0 ? "ทั้งหมด" : bhOptions.find(option => option.value === formData.bh_id)?.label || "-",
+      bh_name: formData.bh_id === "0" ? "ทั้งหมด" : bhOptions.find(option => option.value === formData.bh_id)?.label || "-",
       bk_id: formData.bk_id,
-      bk_name: formData.bk_id === 0 ? "ทั้งหมด" : bkOptions.find(option => option.value === formData.bk_id)?.label || "-",
+      bk_name: formData.bk_id === "0" ? "ทั้งหมด" : bkOptions.find(option => option.value === formData.bk_id)?.label || "-",
       org_id: formData.org_id,
-      org_name: formData.org_id === 0 ? "ทั้งหมด" : orgOptions.find(option => option.value === formData.org_id)?.label || "-",
+      org_name: formData.org_id === "0" ? "ทั้งหมด" : orgOptions.find(option => option.value === formData.org_id)?.label || "-",
       start_date: dayjs(formData.start_date_time).format("DD/MM/BBBB"),
       end_date: dayjs(formData.end_date_time).format("DD/MM/BBBB"),
       logUsage: rows,
@@ -251,6 +270,7 @@ const StatisticUsageLog = (props: Props) => {
   return (
     <section id='statistic-usage-log'>
       <Box className='p-4 flex flex-col gap-4'>
+        {isLoading && <Loading />}
         {/* Main Title */}
         <MainTitle title="Log การใช้งาน" />
 
@@ -308,10 +328,6 @@ const StatisticUsageLog = (props: Props) => {
             onChange={(value) =>
               handleDateTimeChange("start_date_time", value)
             }
-            error={!!errors.start_date_time}
-            register={register("start_date_time", {
-              required: true,
-            })}
             label={"วันเริ่มต้น"}
             labelFontSize="14px"
           />
@@ -334,10 +350,6 @@ const StatisticUsageLog = (props: Props) => {
             onChange={(value) =>
               handleDateTimeChange("end_date_time", value)
             }
-            error={!!errors.end_date_time}
-            register={register("end_date_time", {
-              required: true,
-            })}
             label={"วันสิ้นสุด"}
             labelFontSize="14px"
           />
@@ -362,6 +374,7 @@ const StatisticUsageLog = (props: Props) => {
             label="กองบัญชาการ"
             placeholder="กรุณาเลือกกองบัญชาการ"
             labelFontSize="14px"
+            disabled={formData.agency_id === "0"}
           />
 
           <AutoComplete 
@@ -373,6 +386,7 @@ const StatisticUsageLog = (props: Props) => {
             label="กองบังคับการ"
             placeholder="กรุณาเลือกกองบังคับการ"
             labelFontSize="14px"
+            disabled={formData.agency_id === "0" || formData.bh_id === "0"}
           />
 
           <AutoComplete 
@@ -384,6 +398,7 @@ const StatisticUsageLog = (props: Props) => {
             label="กองกำกับการ"
             placeholder="กรุณาเลือกกองกำกับการ"
             labelFontSize="14px"
+            disabled={formData.agency_id === "0" || formData.bh_id === "0" || formData.bk_id === "0"}
           />
 
           <Box className="flex gap-2 items-end">

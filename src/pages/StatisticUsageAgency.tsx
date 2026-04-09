@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState, useCallback } from "react";
 import dayjs from "dayjs";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
 import { useNavigate } from "react-router-dom";
 import buddhistEra from "dayjs/plugin/buddhistEra";
+import { useSelector } from 'react-redux';
 
 // Material UI
-import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import type { SelectChangeEvent } from "@mui/material/Select";
@@ -26,6 +23,7 @@ import AutoComplete from "../components/auto-complete/AutoComplete";
 import DatePickerBuddhist from "../components/date-picker-buddhist/DatePickerBuddhist";
 import PaginationComponent from "../components/pagination/Pagination";
 import DetailsDialog from "../components/details-dialog/DetailsDialog";
+import Loading from "../components/loading/Loading";
 
 // Icons
 import ClearIcon from "../assets/icons/clear.png";
@@ -41,45 +39,50 @@ import type { AgencyUsage } from "../types/common";
 import type { AgencyUsagePdfData } from "../types/pdf";
 
 // Utils
-import { formatNumber } from "../utils/commonFunctions";
+import { formatNumber, buildOptions } from "../utils/commonFunctions";
 import { exportExcel } from "../utils/exportData";
 
 // PDF
 import {
   downloadStatisticUsageAgencyPdf,
-  generateStatisticUsageAgencyPdfBlob,
 } from "../pdf/StatisticUsageAgencyPdf";
 
-// Mock Data
-import { mockAgencyUsage } from "../mocks/mockAgencyUsage";
+// Hooks
+import usePageTitle from "../hooks/usePageTitle";
+
+// Store
+import type { RootState } from "../store/store";
+
+// API
+import { getAgencyUsage } from "../features/usage-data/api/UsageDataApi";
 
 dayjs.extend(buddhistEra);
 
 interface FormData {
-  agency_id: number;
-  bh_id: number;
-  bk_id: number;
+  agency_id: string;
+  bh_id: string;
+  bk_id: string;
   start_date_time: Date | null;
   end_date_time: Date | null;
 }
 
-type Props = {}
-
-const StatisticUsageAgency = (props: Props) => {
+const StatisticUsageAgency = () => {
+  usePageTitle("สถิติการใช้งาน (หน่วยงาน)");
   const navigate = useNavigate();
 
   // State
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Options
-  const [agencyOptions, setAgencyOptions] = useState<{ label: string, value: number }[]>([]);
-  const [bhOptions, setBhOptions] = useState<{ label: string, value: number }[]>([]);
-  const [bkOptions, setBkOptions] = useState<{ label: string, value: number }[]>([]);
+  const [agencyOptions, setAgencyOptions] = useState<{ label: string, value: string }[]>([]);
+  const [bhOptions, setBhOptions] = useState<{ label: string, value: string }[]>([]);
+  const [bkOptions, setBkOptions] = useState<{ label: string, value: string }[]>([]);
 
   // Data
   const [totalItems, setTotalItems] = useState(0);
   const [totalUsage, setTotalUsage] = useState(0);
-  const [rows, setRows] = useState<AgencyUsage[]>(mockAgencyUsage);
+  const [rows, setRows] = useState<AgencyUsage[]>([]);
   const [selectedData, setSelectedData] = useState<AgencyUsage | null>(null);
 
   // Pagination
@@ -96,20 +99,37 @@ const StatisticUsageAgency = (props: Props) => {
 
   // Form Data
   const [formData, setFormData] = useState<FormData>({
-    agency_id: 0,
-    bh_id: 0,
-    bk_id: 0,
+    agency_id: "0",
+    bh_id: "0",
+    bk_id: "0",
     start_date_time: dayjs().toDate(),
     end_date_time: dayjs().toDate(),
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    clearErrors,
-  } = useForm();
+  // Slice
+  const { agency, bh, bk } = useSelector((state: RootState) => state.dropdown);
+
+  useEffect(() => {
+    setAgencyOptions(buildOptions(agency, "ทุกหน่วยงาน"));
+    setBhOptions(buildOptions(bh, "ทุกกองบัญชาการ"));
+    setBkOptions(buildOptions(bk, "ทุกกองบังคับการ"));
+  }, [agency, bh, bk]);
+
+  useEffect(() => {
+    fetchData();
+  }, [formData]);
+
+  const fetchData = useCallback(
+    async () => {
+      setIsLoading(true);
+      const res = await getAgencyUsage();
+      setRows(res.data);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500)
+    },
+    []
+  );
 
   const handleDropdownChange = (
     event: React.SyntheticEvent,
@@ -125,7 +145,6 @@ const StatisticUsageAgency = (props: Props) => {
       ...prevState,
       [key]: date,
     }));
-    setValue(key, date);
   };
 
   const handlePageChange = async (
@@ -153,9 +172,9 @@ const StatisticUsageAgency = (props: Props) => {
 
   const handleClear = () => {
     setFormData({
-      agency_id: 0,
-      bh_id: 0,
-      bk_id: 0,
+      agency_id: "0",
+      bh_id: "0",
+      bk_id: "0",
       start_date_time: dayjs().toDate(),
       end_date_time: dayjs().toDate(),
     });
@@ -192,11 +211,11 @@ const StatisticUsageAgency = (props: Props) => {
     const pdfName = `สถิติการใช้งาน (หน่วยงาน)_${dayjs(formData.start_date_time).format("BBBB-MM-DD")}_${dayjs(formData.end_date_time).format("BBBB-MM-DD")}.pdf`;
     const pdfData: AgencyUsagePdfData = {
       agency_id: formData.agency_id,
-      agency_name: formData.agency_id === 0 ? "ทั้งหมด" : agencyOptions.find(option => option.value === formData.agency_id)?.label || "-",
+      agency_name: formData.agency_id === "0" ? "ทั้งหมด" : agencyOptions.find(option => option.value === formData.agency_id)?.label || "-",
       bh_id: formData.bh_id,
-      bh_name: formData.bh_id === 0 ? "ทั้งหมด" : bhOptions.find(option => option.value === formData.bh_id)?.label || "-",
+      bh_name: formData.bh_id === "0" ? "ทั้งหมด" : bhOptions.find(option => option.value === formData.bh_id)?.label || "-",
       bk_id: formData.bk_id,
-      bk_name: formData.bk_id === 0 ? "ทั้งหมด" : bkOptions.find(option => option.value === formData.bk_id)?.label || "-",
+      bk_name: formData.bk_id === "0" ? "ทั้งหมด" : bkOptions.find(option => option.value === formData.bk_id)?.label || "-",
       start_date: dayjs(formData.start_date_time).format("DD/MM/BBBB"),
       end_date: dayjs(formData.end_date_time).format("DD/MM/BBBB"),
       agencyUsage: rows,
@@ -228,6 +247,7 @@ const StatisticUsageAgency = (props: Props) => {
   return (
     <section id='statistic-usage-agency'>
       <Box className='p-4 flex flex-col gap-4'>
+        {isLoading && <Loading />}
         {/* Main Title */}
         <MainTitle title="สถิติการใช้งาน (หน่วยงาน)" />
 
@@ -258,6 +278,7 @@ const StatisticUsageAgency = (props: Props) => {
             label="กองบัญชาการ"
             placeholder="กรุณาเลือกกองบัญชาการ"
             labelFontSize="14px"
+            disabled={formData.agency_id === "0"}
           />
 
           <AutoComplete 
@@ -269,6 +290,7 @@ const StatisticUsageAgency = (props: Props) => {
             label="กองบังคับการ"
             placeholder="กรุณาเลือกกองบังคับการ"
             labelFontSize="14px"
+            disabled={formData.agency_id === "0" || formData.bh_id === "0"}
           />
 
           <DatePickerBuddhist
@@ -289,10 +311,6 @@ const StatisticUsageAgency = (props: Props) => {
             onChange={(value) =>
               handleDateTimeChange("start_date_time", value)
             }
-            error={!!errors.start_date_time}
-            register={register("start_date_time", {
-              required: true,
-            })}
             label={"วันเริ่มต้น"}
             labelFontSize="14px"
           />
@@ -315,10 +333,6 @@ const StatisticUsageAgency = (props: Props) => {
             onChange={(value) =>
               handleDateTimeChange("end_date_time", value)
             }
-            error={!!errors.end_date_time}
-            register={register("end_date_time", {
-              required: true,
-            })}
             label={"วันสิ้นสุด"}
             labelFontSize="14px"
           />

@@ -15,7 +15,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 10,
     "network_percent": 50,
     "disable": 1,
-    "disable_percent": 5
+    "disable_percent": 5,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "1",
@@ -28,7 +30,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 0,
     "network_percent": 0,
     "disable": 10,
-    "disable_percent": 5.8
+    "disable_percent": 5.8,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "2",
@@ -41,7 +45,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 0,
     "network_percent": 0,
     "disable": 7,
-    "disable_percent": 6.9
+    "disable_percent": 6.9,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "3",
@@ -54,7 +60,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 1,
     "network_percent": 0.9,
     "disable": 6,
-    "disable_percent": 5.2
+    "disable_percent": 5.2,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "4",
@@ -67,7 +75,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 4,
     "network_percent": 2,
     "disable": 22,
-    "disable_percent": 10.8
+    "disable_percent": 10.8,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "5",
@@ -80,7 +90,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 5,
     "network_percent": 2.1,
     "disable": 16,
-    "disable_percent": 6.7
+    "disable_percent": 6.7,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "6",
@@ -93,7 +105,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 0,
     "network_percent": 0,
     "disable": 15,
-    "disable_percent": 10.9
+    "disable_percent": 10.9,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "7",
@@ -106,7 +120,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 2,
     "network_percent": 1,
     "disable": 12,
-    "disable_percent": 5.8
+    "disable_percent": 5.8,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "8",
@@ -119,7 +135,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 3,
     "network_percent": 2.1,
     "disable": 7,
-    "disable_percent": 4.9
+    "disable_percent": 4.9,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "9",
@@ -132,7 +150,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 4,
     "network_percent": 2.5,
     "disable": 16,
-    "disable_percent": 10.2
+    "disable_percent": 10.2,
+		"ready": 0,
+    "ready_percent": 0
   },
   {
     "police_division": "Total",
@@ -145,7 +165,9 @@ export const mockOverallDayReport: OverallReportType[] = [
     "network": 29,
     "network_percent": 1.9,
     "disable": 112,
-    "disable_percent": 7.5
+    "disable_percent": 7.5,
+		"ready": 0,
+    "ready_percent": 0
   }
 ]
 
@@ -162,7 +184,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.43,
 			"disable": 0,
-			"disable_percent": 80
+			"disable_percent": 80,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "1",
@@ -175,7 +199,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 2.89,
 			"disable": 0,
-			"disable_percent": 6.94
+			"disable_percent": 6.94,
+			"ready": 0,
+			"ready_percent": 0
 		},
 		{
 			"police_division": "2",
@@ -188,7 +214,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 0.99,
 			"disable": 0,
-			"disable_percent": 6.93
+			"disable_percent": 6.93,
+			"ready": 0,
+			"ready_percent": 0
 		},
 		{
 			"police_division": "3",
@@ -201,7 +229,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 3.57,
 			"disable": 0,
-			"disable_percent": 8.25
+			"disable_percent": 8.25,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "4",
@@ -214,7 +244,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.61,
 			"disable": 0,
-			"disable_percent": 9.8
+			"disable_percent": 9.8,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "5",
@@ -227,7 +259,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.56,
 			"disable": 0,
-			"disable_percent": 5.46
+			"disable_percent": 5.46,
+			"ready": 0,
+  		"ready_percent": 0
 		},
 		{
 			"police_division": "6",
@@ -240,7 +274,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.45,
 			"disable": 0,
-			"disable_percent": 8.18
+			"disable_percent": 8.18,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "7",
@@ -253,7 +289,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 3.11,
 			"disable": 0,
-			"disable_percent": 8.07
+			"disable_percent": 8.07,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "8",
@@ -266,7 +304,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.5,
 			"disable": 0,
-			"disable_percent": 5.59
+			"disable_percent": 5.59,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "9",
@@ -279,7 +319,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 2.64,
 			"disable": 0,
-			"disable_percent": 10.83
+			"disable_percent": 10.83,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "Total",
@@ -292,7 +334,9 @@ export const mockOverallWeekReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 2.15,
 			"disable": 0,
-			"disable_percent": 8.72
+			"disable_percent": 8.72,
+			"ready": 0,
+    	"ready_percent": 0
 		}
 	],
 	"charts": [
@@ -430,7 +474,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.43,
 			"disable": 0,
-			"disable_percent": 80
+			"disable_percent": 80,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "1",
@@ -443,7 +489,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 2.89,
 			"disable": 0,
-			"disable_percent": 6.94
+			"disable_percent": 6.94,
+			"ready": 0,
+			"ready_percent": 0
 		},
 		{
 			"police_division": "2",
@@ -456,7 +504,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 0.99,
 			"disable": 0,
-			"disable_percent": 6.93
+			"disable_percent": 6.93,
+			"ready": 0,
+			"ready_percent": 0
 		},
 		{
 			"police_division": "3",
@@ -469,7 +519,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 3.57,
 			"disable": 0,
-			"disable_percent": 8.25
+			"disable_percent": 8.25,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "4",
@@ -482,7 +534,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.61,
 			"disable": 0,
-			"disable_percent": 9.8
+			"disable_percent": 9.8,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "5",
@@ -495,7 +549,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.56,
 			"disable": 0,
-			"disable_percent": 5.46
+			"disable_percent": 5.46,
+			"ready": 0,
+  		"ready_percent": 0
 		},
 		{
 			"police_division": "6",
@@ -508,7 +564,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.45,
 			"disable": 0,
-			"disable_percent": 8.18
+			"disable_percent": 8.18,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "7",
@@ -521,7 +579,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 3.11,
 			"disable": 0,
-			"disable_percent": 8.07
+			"disable_percent": 8.07,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "8",
@@ -534,7 +594,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 1.5,
 			"disable": 0,
-			"disable_percent": 5.59
+			"disable_percent": 5.59,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "9",
@@ -547,7 +609,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 2.64,
 			"disable": 0,
-			"disable_percent": 10.83
+			"disable_percent": 10.83,
+			"ready": 0,
+    	"ready_percent": 0
 		},
 		{
 			"police_division": "Total",
@@ -560,7 +624,9 @@ export const mockOverallMonthReport: OverallWeekReportType = {
 			"network": 0,
 			"network_percent": 2.15,
 			"disable": 0,
-			"disable_percent": 8.72
+			"disable_percent": 8.72,
+			"ready": 0,
+    	"ready_percent": 0
 		}
 	],
 	"charts": generateMonthCharts("2026-03-01")

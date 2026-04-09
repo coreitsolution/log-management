@@ -1,12 +1,19 @@
 // Types
-import type { AgencyUsage, PersonUsage, LogUsage, SearchLog } from "./common";
+import type { 
+  AgencyUsage, 
+  PersonUsage, 
+  LogUsage, 
+  SearchLog, 
+  OverallReportDetail, 
+  OverallReportType,
+} from "./common";
 
 export interface AgencyUsagePdfData {
-  agency_id: number;
+  agency_id: string;
   agency_name: string;
-  bh_id: number;
+  bh_id: string;
   bh_name: string;
-  bk_id: number;
+  bk_id: string;
   bk_name: string;
   start_date: string;
   end_date: string;
@@ -16,13 +23,13 @@ export interface AgencyUsagePdfData {
 export interface PersonUsagePdfData {
   name: string;
   pid_or_water_mark: string;
-  agency_id: number;
+  agency_id: string;
   agency_name: string;
-  bh_id: number;
+  bh_id: string;
   bh_name: string;
-  bk_id: number;
+  bk_id: string;
   bk_name: string;
-  org_id: number;
+  org_id: string;
   org_name: string;
   start_date: string;
   end_date: string;
@@ -32,13 +39,13 @@ export interface PersonUsagePdfData {
 export interface LogUsagePdfData {
   name: string;
   pid_or_water_mark: string;
-  agency_id: number;
+  agency_id: string;
   agency_name: string;
-  bh_id: number;
+  bh_id: string;
   bh_name: string;
-  bk_id: number;
+  bk_id: string;
   bk_name: string;
-  org_id: number;
+  org_id: string;
   org_name: string;
   start_date: string;
   end_date: string;
@@ -46,15 +53,15 @@ export interface LogUsagePdfData {
 }
 
 export interface SearchAgencyPlatePdfData {
-  agency_id: number;
+  agency_id: string;
   agency_name: string;
-  bh_id: number;
+  bh_id: string;
   bh_name: string;
-  bk_id: number;
+  bk_id: string;
   bk_name: string;
   plate_group: string;
   plate_number: string;
-  province_id: number;
+  province_id: string;
   province_name: string;
   start_date: string;
   end_date: string;
@@ -64,17 +71,17 @@ export interface SearchAgencyPlatePdfData {
 export interface SearchPersonPlatePdfData {
   name: string;
   pid_or_water_mark: string;
-  agency_id: number;
+  agency_id: string;
   agency_name: string;
-  bh_id: number;
+  bh_id: string;
   bh_name: string;
-  bk_id: number;
+  bk_id: string;
   bk_name: string;
-  org_id: number;
+  org_id: string;
   org_name: string;
   plate_group: string;
   plate_number: string;
-  province_id: number;
+  province_id: string;
   province_name: string;
   start_date: string;
   end_date: string;
@@ -84,17 +91,17 @@ export interface SearchPersonPlatePdfData {
 export interface SearchLogPlatePdfData {
   name: string;
   pid_or_water_mark: string;
-  agency_id: number;
+  agency_id: string;
   agency_name: string;
-  bh_id: number;
+  bh_id: string;
   bh_name: string;
-  bk_id: number;
+  bk_id: string;
   bk_name: string;
-  org_id: number;
+  org_id: string;
   org_name: string;
   plate_group: string;
   plate_number: string;
-  province_id: number;
+  province_id: string;
   province_name: string;
   start_date: string;
   end_date: string;
@@ -102,21 +109,24 @@ export interface SearchLogPlatePdfData {
 }
 
 export interface OverallCheckpointsPdfData {
-  checkpoint_uid: string,
   checkpoint_name: string,
-  camera_uid: string,
   camera_name: string,
-  station_id: number,
   station_name: string,
-  area_id: number,
   area_name: string,
-  province_id: number,
   province_name: string,
-  district_id: number,
   district_name: string,
-  subdistrict_id: number,
   subdistrict_name: string,
   road: string,
   route: string,
   project: string,
+}
+
+export interface OverallReportPdfData {
+  title: string;
+  date: string;
+  area: string;
+  province: string;
+  project: string;
+  overallReport: OverallReportType[];
+  overallReportDetail: OverallReportDetail[];
 }

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import dayjs from 'dayjs';
+import buddhistEra from "dayjs/plugin/buddhistEra";
 
 // Material UI
 import Box from "@mui/material/Box";
@@ -7,80 +8,73 @@ import Button from "@mui/material/Button";
 
 // Components
 import MainTitle from "../components/main-title/MainTitle";
-import AutoComplete from "../components/auto-complete/AutoComplete";
 import AgencyBarChart from '../components/charts/AgencyBarChart';
+import DatePickerBuddhist from "../components/date-picker-buddhist/DatePickerBuddhist";
+import Loading from "../components/loading/Loading";
 
 // API
 import { getUsageInternalPoliceChart } from "../features/usage-chart/api/UsageChartApi";
 
 // Types
-import type { UsageChartResponse } from "../types/reponse";
-import type { Option } from "../types/common";
+import type { UsageChartResponse } from "../types/response";
 
-type Props = {}
+// Hooks
+import usePageTitle from "../hooks/usePageTitle";
 
-const ChartInternalPolice = (props: Props) => {
+dayjs.extend(buddhistEra);
+
+interface FormData {
+  month_year: Date | null;
+}
+
+const ChartInternalPolice = () => {
+  usePageTitle("แผนภูมิหน่วยงานภายใน ตร.");
 
   // State
   const [monthRange, setMonthRange] = useState<1 | 3>(1);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Data
-  const [monthYearSelect, setMonthYearSelect] = useState<string>("");
   const [data, setData] = useState<UsageChartResponse | null>(null);
 
-  // Options
-  const [monthYearOptions, setMonthYearOptions] = useState<Option[]>([]);
+  // Form Data
+  const [formData, setFormData] = useState<FormData>({
+    month_year: dayjs().toDate(),
+  });
 
   useEffect(() => {
-    const currentDate = dayjs();
+    if (!formData.month_year) return;
 
-    const monthYearData = Array.from({ length: 12 }, (_, index) => {
-      const month = currentDate.subtract(index, "month");
-
-      return {
-        label: month.format("MMMM BBBB"),
-        value: month.startOf("month").toISOString(),
-      };
-    });
-
-    setMonthYearOptions(monthYearData);
-    setMonthYearSelect(monthYearData[0].value);
-  }, []);
-
-  useEffect(() => {
-    if (!monthYearSelect) return;
-
-    fetchData(monthYearSelect, monthRange);
-  }, [monthYearSelect, monthRange]);
+    fetchData(dayjs(formData.month_year).format("YYYY-MM-DD"), monthRange);
+  }, [formData.month_year, monthRange]);
 
   const fetchData = useCallback(
     async (monthYear: string, range: 1 | 3) => {
+      setIsLoading(true);
       const res = await getUsageInternalPoliceChart(monthYear, range);
       setData(res);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500)
     },
     []
   );
-
-  const handleMonthYearChange = (
-    event: React.SyntheticEvent,
-    value: { value: any ,label: string } | null
-  ) => {
-    event.preventDefault();
-    if (value) {
-      setMonthYearSelect(value.value);
-    }
-    else {
-      setMonthYearSelect("");
-    }
-  };
 
   const handleStateChange = (value: 1 | 3) => {
     setMonthRange(value);
   };
 
+  const handleDateTimeChange = (key: keyof typeof formData, date: Date | null) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      [key]: date,
+    }));
+  };
+
   return (
     <section id='chart-internal-police'>
       <Box className='p-4 flex flex-col gap-4'>
+        {isLoading && <Loading />}
         {/* Main Title */}
         <MainTitle title="แผนภูมิหน่วยงานภายใน ตร." />
 
@@ -93,15 +87,31 @@ const ChartInternalPolice = (props: Props) => {
         >
           <Box className='flex gap-2'>
             <Box className='flex flex-col gap-2 w-75'>
-              <label className='text-[15px] text-(--component-color)'>เดือนหลัก</label>
-              <AutoComplete 
-                id="month-year-select"
-                value={monthYearSelect}
-                onChange={handleMonthYearChange}
-                options={monthYearOptions}
-                label=""
-                labelFontSize="15px"
-                placeholder={"เลือกเดือนหลัก"}
+              <DatePickerBuddhist
+                value={formData.month_year}
+                sx={{
+                  marginTop: "5px",
+                  borderRadius: "5px",
+                  backgroundColor: "white",
+                  "& .MuiTextField-root": {
+                    height: "fit-content",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    fontSize: 14,
+                  },
+                }}
+                className="w-full"
+                id="month-year"
+                onChange={(value) =>
+                  handleDateTimeChange("month_year", value)
+                }
+
+                label={"เดือนหลัก"}
+                labelFontSize="14px"
+                views={["year", "month"]}
+                openTo="month"
+                format='MMMM YYYY'
+                maxDate={dayjs()}
               />
             </Box>
             <Box className='flex gap-3 items-end'>
@@ -141,11 +151,15 @@ const ChartInternalPolice = (props: Props) => {
               </Button>
             </Box>
           </Box>
-          <AgencyBarChart
-            data={data?.data ?? []}
-            columns={data?.columns ?? []}
-            selectedMonthYear={monthYearSelect}
-          />
+          {
+            data && (
+              <AgencyBarChart
+                data={data?.data ?? []}
+                columns={data?.columns ?? []}
+                selectedMonthYear={dayjs(formData.month_year).format("YYYY-MM-DD")}
+              />
+            )
+          }
         </Box>
       </Box>
     </section>

@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import TextField from "@mui/material/TextField";
 
 // Components
 import TextBox from "../components/text-box/TextBox";
@@ -15,9 +14,7 @@ interface FormData {
   password: string;
 }
 
-type Props = {}
-
-const Login = (props: Props) => {
+const Login = () => {
 
   // Form Data
   const [formData, setFormData] = React.useState<FormData>({
@@ -46,7 +43,7 @@ const Login = (props: Props) => {
     <section id='login'>
       <Box className="w-screen h-screen flex items-center justify-center bg-(--primary-color)">
         <Box className="flex flex-col items-center justify-center w-[25vw] h-[60vh] bg-(--secondary-color) rounded-[15px] gap-4">
-          <img src="/icons/logo.png" alt="Logo" className='w-30 h-30' />
+          <img src="/project-logo/logo.png" alt="Logo" className='w-30 h-30' />
           <Box className="flex flex-col items-center justify-center">
             <Typography sx={{ fontSize: "18px", fontWeight: 700 }} variant='h6' color='var(--primary-color)'>
               {"ศูนย์สกัดกั้นการลำเลียงยาเสพติด"}

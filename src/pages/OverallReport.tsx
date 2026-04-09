@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import dayjs from "dayjs";
 import buddhistEra from "dayjs/plugin/buddhistEra";
-import { useForm } from "react-hook-form";
+import { useSelector } from 'react-redux';
 
 // Material UI
 import Box from "@mui/material/Box";
@@ -25,6 +25,7 @@ import DatePickerBuddhist from "../components/date-picker-buddhist/DatePickerBud
 import AutoComplete from "../components/auto-complete/AutoComplete";
 import PieChartComponent from "../components/pie-chart/PieChart";
 import LineChartComponent from "../components/line-chart/LineChart";
+import Loading from "../components/loading/Loading";
 
 // Icons
 import ClearIcon from "../assets/icons/clear.png";
@@ -35,41 +36,50 @@ import TableIcon from "../assets/icons/table.png";
 // Types
 import type { OverallPieChart, OverallLineChart } from "../types/chart";
 import type { OverallReportType, OverallReportDetail } from "../types/common";
+import type { OverallReportPdfData } from "../types/pdf";
 
 // Utils
 import { exportExcel } from "../utils/exportData";
+import { buildOptions } from "../utils/commonFunctions";
 
-// Mocks
-import { 
-  mockOverallDayReport, 
-  mockOverallWeekReport,
-  mockOverallMonthReport,
-} from "../mocks/mockOverallReport";
+// PDF
 import {
-  mockOverallReportDetail
-} from "../mocks/mockOverallReportDetail";
+  downloadOverallReportPdf,
+} from "../pdf/OverallReportPdf";
+
+// Hooks
+import usePageTitle from "../hooks/usePageTitle";
+
+// Store
+import type { RootState } from "../store/store";
+
+// API
+import { 
+  getOverallDayReport, 
+  getOverallReport,
+} from "../features/overall/api/OverallApi";
 
 dayjs.extend(buddhistEra);
 
 interface FormData {
-  area_id: number;
-  province_id: number;
-  project_id: number;
+  area_id: string;
+  province_id: string;
+  project_id: string;
   date_time: Date | null;
   start_date_time: Date | null;
   end_date_time: Date | null;
   month_year: Date | null;
 }
 
-type Props = {}
-
-const OverallReport = (props: Props) => {
+const OverallReport = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
+  usePageTitle("รายงานภาพรวมของระบบ");
 
   // State
   const [reportRange, setReportRange] = useState<"day" | "week" | "month">("day");
-
+  const [isLoading, setIsLoading] = useState(false);
+  
   // Data
   const [dayReportData, setDayReportData] = useState<OverallReportType[]>([]);
   const [weekReportData, setWeekReportData] = useState<OverallReportType[]>([]);
@@ -77,77 +87,108 @@ const OverallReport = (props: Props) => {
   const [dayReport, setDayReport] = useState<OverallPieChart[]>([]);
   const [weekReport, setWeekReport] = useState<OverallLineChart[]>([]);
   const [monthReport, setMothReport] = useState<OverallLineChart[]>([]);
-  const [excelData, setExcelData] = useState<OverallReportDetail[]>(mockOverallReportDetail);
+  const [excelData, setExcelData] = useState<OverallReportDetail[]>([]);
 
   // Options
-  const [provinceOptions, setProvinceOptions] = useState<{ label: string, value: number }[]>([]);
-  const [projectOptions, setProjectOptions] = useState<{ label: string, value: number }[]>([]);
-  const [areaOptions, setAreaOptions] = useState<{ label: string, value: number }[]>([]);
+  const [provinceOptions, setProvinceOptions] = useState<{ label: string, value: string }[]>([]);
+  const [projectOptions, setProjectOptions] = useState<{ label: string, value: string }[]>([]);
+  const [areaOptions, setAreaOptions] = useState<{ label: string, value: string }[]>([]);
 
   // Form Data
   const [formData, setFormData] = useState<FormData>({
-    area_id: 0,
-    province_id: 0,
-    project_id: 0,
+    area_id: "0",
+    province_id: "0",
+    project_id: "0",
     date_time: dayjs().toDate(),
     start_date_time: dayjs().subtract(6, "day").toDate(),
     end_date_time: dayjs().toDate(),
     month_year: dayjs().toDate(),
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    clearErrors,
-  } = useForm();
+  // Slice
+  const { area, province, project } = useSelector((state: RootState) => state.dropdown);
 
   useEffect(() => {
-    if (reportRange === "day") {
-      const totalData = mockOverallDayReport.find((report) => report.police_division.toLowerCase() === "total");
-      const reportData = [
-        { 
-          name: "normal", 
-          name_th: "สถานะปกติ", 
-          value: totalData?.normal ?? 0, 
-          percent_value: totalData?.normal_percent ?? 0, 
-          fill: "var(--status-device-normal)" 
-        },
-        { 
-          name: "device", 
-          name_th: "อุปกรณ์ขัดข้อง", 
-          value: totalData?.device ?? 0, 
-          percent_value: totalData?.device_percent ?? 0, 
-          fill: "var(--status-device-outage)" 
-        },
-        { 
-          name: "network", 
-          name_th: "เครือข่ายขัดข้อง", 
-          value: totalData?.network ?? 0, 
-          percent_value: totalData?.network_percent ?? 0, 
-          fill: "var(--status-network-outage)" 
-        },
-        { 
-          name: "disable", 
-          name_th: "อุปกรณ์ปิดใช้งาน", 
-          value: totalData?.disable ?? 0, 
-          percent_value: totalData?.disable_percent ?? 0, 
-          fill: "var(--status-device-disable)" 
-        },
-      ];
-      setDayReport(reportData);
-      setDayReportData(mockOverallDayReport);
-    }
-    else if (reportRange === "week") {
-      setWeekReport(mockOverallWeekReport.charts);
-      setWeekReportData(mockOverallWeekReport.rows);
-    }
-    else if (reportRange === "month") {
-      setMothReport(mockOverallMonthReport.charts);
-      setMonthReportData(mockOverallMonthReport.rows);
-    }
-  }, [reportRange])
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        if (reportRange === "day") {
+          const res = await getOverallDayReport();
+          const data = res.data;
+
+          setDayReportData(data);
+
+          const totalData = data.find(
+            (report: any) =>
+              report.police_division?.toLowerCase() === "total"
+          );
+
+          const reportData = [
+            {
+              name: "normal",
+              name_th: "สถานะปกติ",
+              value: totalData?.normal ?? 0,
+              percent_value: totalData?.normal_percent ?? 0,
+              fill: "var(--status-device-normal)",
+            },
+            {
+              name: "device",
+              name_th: "อุปกรณ์ขัดข้อง",
+              value: totalData?.device ?? 0,
+              percent_value: totalData?.device_percent ?? 0,
+              fill: "var(--status-device-outage)",
+            },
+            {
+              name: "network",
+              name_th: "เครือข่ายขัดข้อง",
+              value: totalData?.network ?? 0,
+              percent_value: totalData?.network_percent ?? 0,
+              fill: "var(--status-network-outage)",
+            },
+            {
+              name: "disable",
+              name_th: "อุปกรณ์ปิดใช้งาน",
+              value: totalData?.disable ?? 0,
+              percent_value: totalData?.disable_percent ?? 0,
+              fill: "var(--status-device-disable)",
+            },
+          ];
+
+          setDayReport(reportData);
+        }
+
+        if (reportRange === "week") {
+          const res = await getOverallReport("week");
+          const rows = res.data.rows;
+
+          setWeekReportData(rows);
+          setWeekReport(res.data.charts);
+        }
+
+        if (reportRange === "month") {
+          const res = await getOverallReport("month");
+          const rows = res.data.rows;
+
+          setMonthReportData(rows);
+          setMothReport(res.data.charts);
+        }
+      } 
+      catch (error) {
+        console.error("Fetch overall report error:", error);
+      }
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500)
+    };
+
+    fetchData();
+  }, [reportRange]);
+
+  useEffect(() => {
+    setAreaOptions(buildOptions(area, "ทุกพื้นที่"));
+    setProvinceOptions(buildOptions(province, "ทุกจังหวัด"));
+    setProjectOptions(buildOptions(project, "ทุกโครงการ"));
+  }, [area, province, project]);
 
   const handleStateChange = (value: "day" | "week" | "month") => {
     setReportRange(value);
@@ -166,9 +207,6 @@ const OverallReport = (props: Props) => {
           start_date_time: start.toDate(),
           end_date_time: end.toDate(),
         }));
-
-        setValue("start_date_time", start.toDate());
-        setValue("end_date_time", end.toDate());
         return;
       }
 
@@ -181,9 +219,6 @@ const OverallReport = (props: Props) => {
           start_date_time: start.toDate(),
           end_date_time: end.toDate(),
         }));
-
-        setValue("start_date_time", start.toDate());
-        setValue("end_date_time", end.toDate());
         return;
       }
     }
@@ -192,8 +227,6 @@ const OverallReport = (props: Props) => {
       ...prevState,
       [key]: date,
     }));
-
-    setValue(key, date);
   };
 
   const handleDropdownChange = (
@@ -207,9 +240,9 @@ const OverallReport = (props: Props) => {
 
   const handleClear = () => {
     setFormData({
-      area_id: 0,
-      province_id: 0,
-      project_id: 0,
+      area_id: "0",
+    province_id: "0",
+    project_id: "0",
       date_time: dayjs().toDate(),
       start_date_time: dayjs().subtract(6, "day").toDate(),
       end_date_time: dayjs().toDate(),
@@ -228,19 +261,42 @@ const OverallReport = (props: Props) => {
   const handleExport = (type: "pdf" | "excel") => {
     handleCloseMenu();
     if (type === "pdf") {
-      
+      handleExportPdf();
     }
     else if (type === "excel") {
       handleExportExcel();
     }
   }
 
+  const handleExportPdf = async () => {
+    const name = reportRange === "day" ? "รายงานรายวัน" : reportRange === "week" ? "รายงานรายสัปดาห์" : "รายงานรายเดือน";
+    const dateName = reportRange === "week" ? `${dayjs(formData.start_date_time).format("BBBB-MM-DD")}_${dayjs(formData.end_date_time).format("BBBB-MM-DD")}` : 
+                `${dayjs(formData.date_time).format("BBBB-MM-DD")}`
+    const date = reportRange === "week" ? `${dayjs(formData.start_date_time).format("DD/MM/BBBB")} - ${dayjs(formData.end_date_time).format("DD/MM/BBBB")}` : 
+                `${dayjs(formData.date_time).format("DD/MM/BBBB")}`
+    const pdfName = `${name}_${dateName}.pdf`;
+    const pdfData: OverallReportPdfData = {
+      title: `รายงานประจำ${reportRange === "day" ? "วัน" : reportRange === "week" ? "สัปดาห์" : "เดือน"}และจุดตรวจที่มีปัญหา`,
+      date: date,
+      area: formData.area_id === "0" ? "ทั้งหมด" : areaOptions.find((item) => item.value === formData.area_id)?.label ?? "-",
+      province: formData.province_id === "0" ? "ทั้งหมด" : provinceOptions.find((item) => item.value === formData.province_id)?.label ?? "-",
+      project: formData.project_id === "0" ? "ทั้งหมด" : projectOptions.find((item) => item.value === formData.project_id)?.label ?? "-",
+      overallReport: reportRange === "day" ? dayReportData : reportRange === "week" ? weekReportData : monthReportData,
+      overallReportDetail: excelData,
+    }
+    await downloadOverallReportPdf(
+      pdfData,
+      pdfName,
+    );
+  }
+
   const handleExportExcel = async () => {
     const sheetName = reportRange === "day" ? "รายงานรายวัน" : reportRange === "week" ? "รายงานรายสัปดาห์" : "รายงานรายเดือน";
-
+    const date = reportRange === "week" ? `${dayjs(formData.start_date_time).format("BBBB-MM-DD")}_${dayjs(formData.end_date_time).format("BBBB-MM-DD")}` : 
+                `${dayjs(formData.date_time).format("BBBB-MM-DD")}`
     await exportExcel({
       sheetName: sheetName,
-      fileName: `รายงานรายวัน_${dayjs(formData.start_date_time).format("BBBB-MM-DD")}_${dayjs(formData.end_date_time).format("BBBB-MM-DD")}.xlsx`,
+      fileName: `${sheetName}_${date}.xlsx`,
       headers: [
         "ลำดับ",
         "จุดตรวจ",
@@ -281,6 +337,7 @@ const OverallReport = (props: Props) => {
   return (
     <section id='overall-report'>
       <Box className='p-4 flex flex-col gap-4'>
+        {isLoading && <Loading />}
         {/* Main Title */}
         <MainTitle title="รายงานภาพรวมของระบบ" />
 
@@ -376,10 +433,6 @@ const OverallReport = (props: Props) => {
                   onChange={(value) =>
                     handleDateTimeChange("date_time", value)
                   }
-                  error={!!errors.date_time}
-                  register={register("date_time", {
-                    required: true,
-                  })}
                   label={"วันที่"}
                   labelFontSize="14px"
                   maxDate={dayjs()}
@@ -408,10 +461,6 @@ const OverallReport = (props: Props) => {
                     onChange={(value) =>
                       handleDateTimeChange("start_date_time", value)
                     }
-                    error={!!errors.start_date_time}
-                    register={register("start_date_time", {
-                      required: true,
-                    })}
                     label={"ตั้งแต่วันที่"}
                     labelFontSize="14px"
                     maxDate={dayjs()}
@@ -434,10 +483,6 @@ const OverallReport = (props: Props) => {
                     onChange={(value) =>
                       handleDateTimeChange("end_date_time", value)
                     }
-                    error={!!errors.end_date_time}
-                    register={register("end_date_time", {
-                      required: true,
-                    })}
                     label={"ถึงวันที่"}
                     labelFontSize="14px"
                     maxDate={dayjs()}
@@ -466,10 +511,6 @@ const OverallReport = (props: Props) => {
                   onChange={(value) =>
                     handleDateTimeChange("month_year", value)
                   }
-                  error={!!errors.month_year}
-                  register={register("month_year", {
-                    required: true,
-                  })}
                   label={"เดือน"}
                   labelFontSize="14px"
                   views={["year", "month"]}
@@ -562,7 +603,9 @@ const OverallReport = (props: Props) => {
                     },
                   },
                   "& .MuiTypography-root": {
-                    fontSize: "14px"
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    color: "var(--primary-color)",
                   },
                   "& .MuiSvgIcon-root": {
                     fontSize: 20,

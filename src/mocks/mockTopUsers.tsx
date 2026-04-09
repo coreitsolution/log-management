@@ -1,6 +1,6 @@
 // Types
 import type { TopUsersType } from "../types/common";
-import type { TopUsersResponse } from "../types/reponse";
+import type { TopUsersResponse } from "../types/response";
 
 export const mockTopInternalUsersType: TopUsersType[] = [
   {

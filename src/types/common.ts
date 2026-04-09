@@ -109,25 +109,19 @@ export interface UsageCount {
 
 export interface OverallCheckpointType {
   id: number;
-  database_status: number;
-  wifi_status: number;
-  checkpoint_uid: string;
-  checkpoint_name: string;
-  camera_uid: string;
-  camera_name: string;
-  station_id: number;
-  station_name: string;
-  area_id: number;
-  area_name: string;
-  province_id: number;
-  province_name: string;
-  district_id: number;
-  district_name: string;
-  subdistrict_id: number;
-  subdistrict_name: string;
-  road: string;
-  route: number;
-  project: string;
+  data_status: "online" | "offline";
+  network_status: "online" | "offline";
+  name_display: string;
+  police_checkpoint: string;
+  police_station: string;
+  police_division: string;
+  police_division_name: string;
+  province: string;
+  district: string;
+  sub_district: string;
+  route: string;
+  lane: string;
+  project_name: string;
 }
 
 export type ColumnOption = {
@@ -174,6 +168,8 @@ export interface OverallReportType {
   network_percent: number;
   disable: number;
   disable_percent: number;
+  ready: number;
+  ready_percent: number;
 }
 
 export interface OverallReportChartType {
@@ -210,4 +206,9 @@ export interface OverallReportDetail {
   date_count_error: number;
   date_count_error_percent: number;
   remark: string;
+}
+
+export interface Dropdown {
+  code: string;
+  name: string;
 }

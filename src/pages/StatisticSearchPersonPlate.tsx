@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState, useCallback } from "react";
 import dayjs from "dayjs";
 import { useLocation, useNavigate } from "react-router-dom";
 import buddhistEra from "dayjs/plugin/buddhistEra";
+import { useSelector } from 'react-redux';
 
 // Material UI
 import Box from "@mui/material/Box";
@@ -24,6 +24,7 @@ import DatePickerBuddhist from "../components/date-picker-buddhist/DatePickerBud
 import PaginationComponent from "../components/pagination/Pagination";
 import DetailsDialog from "../components/details-dialog/DetailsDialog";
 import TextBox from "../components/text-box/TextBox";
+import Loading from "../components/loading/Loading";
 
 // Icons
 import ClearIcon from "../assets/icons/clear.png";
@@ -39,17 +40,22 @@ import type { PersonUsage } from "../types/common";
 import type { SearchPersonPlatePdfData } from "../types/pdf";
 
 // Utils
-import { formatNumber } from "../utils/commonFunctions";
+import { formatNumber, buildOptions } from "../utils/commonFunctions";
 import { exportExcel } from "../utils/exportData";
 
 // PDF
 import {
   downloadStatisticSearchPersonPlatePdf,
-  generateStatisticSearchPersonPlatePdfBlob,
 } from "../pdf/StatisticSearchPersonPlatePdf";
 
-// Mock Data
-import { mockPersonUsage } from "../mocks/mockPersonUsage";
+// Hooks
+import usePageTitle from "../hooks/usePageTitle";
+
+// Store
+import type { RootState } from "../store/store";
+
+// API
+import { getSearchPersonUsage } from "../features/usage-search-data/api/UsageSearchDataApi";
 
 dayjs.extend(buddhistEra);
 
@@ -58,42 +64,40 @@ interface FormData {
   pid_or_water_mark: string;
   plate_group: string;
   plate_number: string;
-  province_id: number;
-  agency_id: number;
-  bh_id: number;
-  bk_id: number;
-  org_id: number;
+  province_id: string;
+  agency_id: string;
+  bh_id: string;
+  bk_id: string;
+  org_id: string;
   start_date_time: Date | null;
   end_date_time: Date | null;
 }
 
-type Props = {}
-
-const StatisticUsagePerson = (props: Props) => {
+const StatisticUsagePerson = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  usePageTitle("สถิติการค้นป้ายทะเบียน (รายบุคคล)");
   
   // State
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Options
-  const [agencyOptions, setAgencyOptions] = useState<{ label: string, value: number }[]>([]);
-  const [bhOptions, setBhOptions] = useState<{ label: string, value: number }[]>([]);
-  const [bkOptions, setBkOptions] = useState<{ label: string, value: number }[]>([]);
-  const [orgOptions, setOrgOptions] = useState<{ label: string, value: number }[]>([]);
-  const [provinceOptions, setProvinceOptions] = useState<{ label: string, value: number }[]>([]);
+  const [agencyOptions, setAgencyOptions] = useState<{ label: string, value: string }[]>([]);
+  const [bhOptions, setBhOptions] = useState<{ label: string, value: string }[]>([]);
+  const [bkOptions, setBkOptions] = useState<{ label: string, value: string }[]>([]);
+  const [orgOptions, setOrgOptions] = useState<{ label: string, value: string }[]>([]);
+  const [provinceOptions, setProvinceOptions] = useState<{ label: string, value: string }[]>([]);
 
   // Data
   const [totalItems, setTotalItems] = useState(0);
   const [totalUsage, setTotalUsage] = useState(0);
-  const [rows, setRows] = useState<PersonUsage[]>(mockPersonUsage);
+  const [rows, setRows] = useState<PersonUsage[]>([]);
   const [selectedData, setSelectedData] = useState<PersonUsage | null>(null);
 
   // Pagination
   const [page, setPage] = useState(1);
-  const [pageInput, setPageInput] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalData, setTotalData] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(
     ROWS_PER_PAGE_OPTIONS[0],
   );
@@ -107,7 +111,7 @@ const StatisticUsagePerson = (props: Props) => {
       return {
         plate_group: "",
         plate_number: "",
-        province_id: 0,
+        province_id: "0",
         name: "",
         pid_or_water_mark: "",
         agency_id: location.state.filters.agency_id,
@@ -122,25 +126,44 @@ const StatisticUsagePerson = (props: Props) => {
     return {
       plate_group: "",
       plate_number: "",
-      province_id: 0,
+      province_id: "0",
       name: "",
       pid_or_water_mark: "",
-      agency_id: 0,
-      bh_id: 0,
-      bk_id: 0,
-      org_id: 0,
+      agency_id: "0",
+      bh_id: "0",
+      bk_id: "0",
+      org_id: "0",
       start_date_time: dayjs().toDate(),
       end_date_time: dayjs().toDate(),
     };
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    clearErrors,
-  } = useForm();
+  // Slice
+  const { agency, bh, bk, org, province } = useSelector((state: RootState) => state.dropdown);
+
+  useEffect(() => {
+    setAgencyOptions(buildOptions(agency, "ทุกหน่วยงาน"));
+    setBhOptions(buildOptions(bh, "ทุกกองบัญชาการ"));
+    setBkOptions(buildOptions(bk, "ทุกกองบังคับการ"));
+    setOrgOptions(buildOptions(org, "ทุกกองกำกับการ"));
+    setProvinceOptions(buildOptions(province, "", false));
+  }, [agency, province, bh, bk, org]);
+
+  useEffect(() => {
+    fetchData();
+  }, [formData]);
+
+  const fetchData = useCallback(
+    async () => {
+      setIsLoading(true);
+      const res = await getSearchPersonUsage();
+      setRows(res.data);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500)
+    },
+    []
+  );
 
   const handleTextChange = (key: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -160,7 +183,6 @@ const StatisticUsagePerson = (props: Props) => {
       ...prevState,
       [key]: date,
     }));
-    setValue(key, date);
   };
 
   const handlePageChange = async (
@@ -190,13 +212,13 @@ const StatisticUsagePerson = (props: Props) => {
     setFormData({
       plate_group: "",
       plate_number: "",
-      province_id: 0,
+      province_id: "0",
       name: "",
       pid_or_water_mark: "",
-      agency_id: 0,
-      bh_id: 0,
-      bk_id: 0,
-      org_id: 0,
+      agency_id: "0",
+      bh_id: "0",
+      bk_id: "0",
+      org_id: "0",
       start_date_time: dayjs().toDate(),
       end_date_time: dayjs().toDate(),
     });
@@ -239,13 +261,13 @@ const StatisticUsagePerson = (props: Props) => {
       pid_or_water_mark: formData.pid_or_water_mark || "-",
       name: formData.name || "-",
       agency_id: formData.agency_id,
-      agency_name: formData.agency_id === 0 ? "ทั้งหมด" : agencyOptions.find(option => option.value === formData.agency_id)?.label || "-",
+      agency_name: formData.agency_id === "0" ? "ทั้งหมด" : agencyOptions.find(option => option.value === formData.agency_id)?.label || "-",
       bh_id: formData.bh_id,
-      bh_name: formData.bh_id === 0 ? "ทั้งหมด" : bhOptions.find(option => option.value === formData.bh_id)?.label || "-",
+      bh_name: formData.bh_id === "0" ? "ทั้งหมด" : bhOptions.find(option => option.value === formData.bh_id)?.label || "-",
       bk_id: formData.bk_id,
-      bk_name: formData.bk_id === 0 ? "ทั้งหมด" : bkOptions.find(option => option.value === formData.bk_id)?.label || "-",
+      bk_name: formData.bk_id === "0" ? "ทั้งหมด" : bkOptions.find(option => option.value === formData.bk_id)?.label || "-",
       org_id: formData.org_id,
-      org_name: formData.org_id === 0 ? "ทั้งหมด" : orgOptions.find(option => option.value === formData.org_id)?.label || "-",
+      org_name: formData.org_id === "0" ? "ทั้งหมด" : orgOptions.find(option => option.value === formData.org_id)?.label || "-",
       plate_group: formData.plate_group || "",
       plate_number: formData.plate_number || "",
       province_id: formData.province_id,
@@ -284,6 +306,7 @@ const StatisticUsagePerson = (props: Props) => {
   return (
     <section id='statistic-search-person-plate'>
       <Box className='p-4 flex flex-col gap-4'>
+        {isLoading && <Loading />}
         {/* Main Title */}
         <MainTitle title="สถิติการค้นป้ายทะเบียน (รายบุคคล)" />
 
@@ -343,6 +366,7 @@ const StatisticUsagePerson = (props: Props) => {
             label="กองบัญชาการ"
             placeholder="กรุณาเลือกกองบัญชาการ"
             labelFontSize="14px"
+            disabled={formData.agency_id === "0"}
           />
 
           <AutoComplete 
@@ -354,6 +378,7 @@ const StatisticUsagePerson = (props: Props) => {
             label="กองบังคับการ"
             placeholder="กรุณาเลือกกองบังคับการ"
             labelFontSize="14px"
+            disabled={formData.agency_id === "0" || formData.bh_id === "0"}
           />
 
           <AutoComplete 
@@ -365,6 +390,7 @@ const StatisticUsagePerson = (props: Props) => {
             label="กองกำกับการ"
             placeholder="กรุณาเลือกกองกำกับการ"
             labelFontSize="14px"
+            disabled={formData.agency_id === "0" || formData.bh_id === "0" || formData.bk_id === "0"}
           />
 
           <TextBox
@@ -420,10 +446,6 @@ const StatisticUsagePerson = (props: Props) => {
             onChange={(value) =>
               handleDateTimeChange("start_date_time", value)
             }
-            error={!!errors.start_date_time}
-            register={register("start_date_time", {
-              required: true,
-            })}
             label={"วันเริ่มต้น"}
             labelFontSize="14px"
           />
@@ -446,10 +468,6 @@ const StatisticUsagePerson = (props: Props) => {
             onChange={(value) =>
               handleDateTimeChange("end_date_time", value)
             }
-            error={!!errors.end_date_time}
-            register={register("end_date_time", {
-              required: true,
-            })}
             label={"วันสิ้นสุด"}
             labelFontSize="14px"
           />
@@ -471,12 +489,14 @@ const StatisticUsagePerson = (props: Props) => {
             <IconButton 
               sx={{ border: "1px solid var(--primary-color)", width: "40px", height: "40px", borderRadius: "5px" }}
               onClick={handleExportPdf}
+              disabled={rows.length === 0}
             >
               <img src={ExportPdfIcon} alt="Export PDF" className="h-6 w-6" />
             </IconButton>
             <IconButton 
               sx={{ border: "1px solid var(--primary-color)", width: "40px", height: "40px", borderRadius: "5px" }}
               onClick={handleExportExcel}
+              disabled={rows.length === 0}
             >
               <img src={ExportExcelIcon} alt="Export CSV" className="h-6 w-6" />
             </IconButton>

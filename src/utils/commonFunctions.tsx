@@ -37,3 +37,18 @@ export const loadImageAsBase64 = async (url: string): Promise<string> => {
     return NO_IMAGE;
   }
 }
+
+export const buildOptions = (
+  list: { name: string; code: string }[],
+  defaultLabel: string,
+  isAll: boolean = true
+) => {
+  const options = list.map((item) => ({
+    label: item.name,
+    value: item.code,
+  }));
+
+  return isAll
+    ? [{ label: defaultLabel, value: "0" }, ...options]
+    : options;
+};

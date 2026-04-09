@@ -21,6 +21,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from "../assets/icons/logout.png";
 import SubMenuIcon from "../assets/icons/sub-menu.png";
 
+// Constants
+import { MENU_ITEMS } from "../constants/nav";
+
 type NavbarProps = {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -38,47 +41,14 @@ const Navbar = ({ open, setOpen }: NavbarProps) => {
   };
 
   const toggleSubMenu = (index: number) => {
-    setOpenMenus((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }));
-  };
+    setOpenMenus((prev) => {
+      const isCurrentlyOpen = prev[index];
 
-  const menuItems = [
-    {
-      label: "แผนภูมิหน่วยงานภายใน ตร.",
-      subMenu: [
-        { label: "แผนภูมิหน่วยงานภายใน ตร.", path: "/chart-internal-police" },
-        { label: "แผนภูมิหน่วยงานภายใน บช.ปส", path: "/chart-internal-nsb" },
-        { label: "แผนภูมิหน่วยงานภายนอก ตร.", path: "/chart-external-police" },
-        { label: "ผู้ใช้งานสูงสุด", path: "/chart-top-users" },
-      ]
-    },
-    {
-      label: "รายงานภาพรวม",
-      subMenu: [
-        { label: "รายงานจุดตรวจ", path: "/overall-checkpoints" },
-        { label: "แผนที่", path: "/overall-map" },
-        { label: "รายงาน", path: "/overall-report" },
-      ]
-    },
-    {
-      label: "สถิติการใช้งาน ",
-      subMenu: [
-        { label: "สถิติการใช้งาน (หน่วยงาน)", path: "/statistic-usage-agency" },
-        { label: "สถิติการใช้งาน (รายบุคคล)", path: "/statistic-usage-person" },
-        { label: "Log การใช้งาน", path: "/statistic-usage-log" },
-      ]
-    },
-    {
-      label: "สถิติการค้นป้ายทะเบียน ",
-      subMenu: [
-        { label: "สถิติการค้นป้ายทะเบียน (หน่วยงาน)", path: "/statistic-search-agency-plate" },
-        { label: "สถิติการค้นป้ายทะเบียน (รายบุคคล)", path: "/statistic-search-person-plate" },
-        { label: "Log การค้นป้ายทะเบียน", path: "/statistic-search-log-plate" },
-      ]
-    },
-  ]
+      return {
+        [index]: !isCurrentlyOpen,
+      };
+    });
+  };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -104,7 +74,7 @@ const Navbar = ({ open, setOpen }: NavbarProps) => {
             </IconButton>
 
             <div className="flex gap-2 items-center justify-center">
-              <img src="/icons/logo.png" alt="Logo" className="h-10 w-10" />
+              <img src="/project-logo/logo.png" alt="Logo" className="h-10 w-10" />
               <div className="flex flex-col">
                 <Typography variant="h6" sx={{ fontSize: "1.2rem", fontWeight: "bold" }}>
                   NSB License Plate
@@ -164,7 +134,7 @@ const Navbar = ({ open, setOpen }: NavbarProps) => {
       >
         <Box sx={{ width: 300, py: 3, gap: 1, display: "flex", flexDirection: "column" }}>
           {
-            menuItems.map((item, index) => {
+            MENU_ITEMS.map((item, index) => {
               const isOpen =
                 openMenus[index] ||
                 item.subMenu.some((sub) => sub.path === location.pathname);

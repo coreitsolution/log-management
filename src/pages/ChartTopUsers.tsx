@@ -18,11 +18,10 @@ import type { SelectChangeEvent } from '@mui/material';
 
 // Components
 import MainTitle from "../components/main-title/MainTitle";
-import AutoComplete from "../components/auto-complete/AutoComplete";
-import AgencyBarChart from '../components/charts/AgencyBarChart';
 import DatePickerBuddhist from "../components/date-picker-buddhist/DatePickerBuddhist";
 import PaginationBelowTableComponent from "../components/pagination/PaginationBelowTable";
 import TopUsersDisplaySetting from '../components/top-users-display-setting/TopUsersDisplaySetting';
+import Loading from "../components/loading/Loading";
 
 // Icons
 import SettingIcon from "../assets/icons/setting.png";
@@ -32,7 +31,7 @@ import SettingWhiteIcon from "../assets/icons/setting-white.png";
 import { getTopUsersChart } from "../features/usage-chart/api/UsageChartApi";
 
 // Types
-import type { Option, TopUsersType } from "../types/common";
+import type { TopUsersType } from "../types/common";
 
 // Utils
 import { formatNumber } from "../utils/commonFunctions";
@@ -40,24 +39,27 @@ import { formatNumber } from "../utils/commonFunctions";
 // Constants
 import { ROWS_PER_PAGE_OPTIONS } from "../constants/dropdown";
 
+// Hooks
+import usePageTitle from "../hooks/usePageTitle";
+
 dayjs.extend(buddhistEra);
 
-type Props = {}
+interface FormData {
+  month_year: Date | null;
+}
 
-const ChartTopUsers = (props: Props) => {
+const ChartTopUsers = () => {
+  usePageTitle("ผู้ใช้งานสูงสุด (ย้อนหลัง 3 เดือน) ");
 
   // State
   const [policeState, setPoliceState] = useState<"internal" | "external">("internal");
   const [displaySettingOpen, setDisplaySettingOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Data
-  const [monthYearSelect, setMonthYearSelect] = useState<string>("");
   const [topUsersData, setTopUsersData] = useState<TopUsersType[]>([]);
   const [topInternalValue, setTopInternalValue] = useState<number>(5000);
   const [topExternalValue, setTopExternalValue] = useState<number>(3000);
-
-  // Options
-  const [monthYearOptions, setMonthYearOptions] = useState<Option[]>([]);
 
   // Pagination
   const [page, setPage] = useState<number>(1);
@@ -68,40 +70,28 @@ const ChartTopUsers = (props: Props) => {
   );
   const [rowsPerPageOptions] = useState(ROWS_PER_PAGE_OPTIONS);
 
-  useEffect(() => {
-    const currentDate = dayjs();
-
-    const monthYearData = Array.from({ length: 12 }, (_, index) => {
-      const month = currentDate.subtract(index, "month");
-
-      return {
-        label: month.format("MMMM BBBB"),
-        value: month.startOf("month").toISOString(),
-      };
-    });
-
-    setMonthYearOptions(monthYearData);
-    setMonthYearSelect(monthYearData[0].value);
-  }, []);
+  // Form Data
+  const [formData, setFormData] = useState<FormData>({
+    month_year: dayjs().toDate(),
+  });
 
   useEffect(() => {
-    if (!monthYearSelect) return;
+    if (!formData.month_year) return;
 
-    fetchData(monthYearSelect, policeState);
-  }, [monthYearSelect, policeState]);
+    fetchData(dayjs(formData.month_year).format("YYYY-MM-DD"), policeState);
+  }, [formData.month_year, policeState]);
 
   const fetchData = useCallback(
     async (monthYear: string, policeState: "internal" | "external") => {
+      setIsLoading(true);
       const res = await getTopUsersChart(monthYear, policeState);
-      if (!res) return;
       setTopUsersData(res.results);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500)
     },
     []
   );
-
-  const handleDateTimeChange = (date: Date | null) => {
-    setMonthYearSelect(dayjs(date).format("YYYY-MM-DD"));
-  };
 
   const handleStateChange = (value: "internal" | "external") => {
     setPoliceState(value);
@@ -147,11 +137,19 @@ const ChartTopUsers = (props: Props) => {
     setTopExternalValue(topExternal);
   }
 
+  const handleDateTimeChange = (key: keyof typeof formData, date: Date | null) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      [key]: date,
+    }));
+  };
+
   return (
     <section id='chart-external-police' className='h-full'>
       <Box className='p-4 flex flex-col gap-4 h-full'>
+        {isLoading && <Loading />}
         {/* Main Title */}
-        <MainTitle title="ผู้ใช้งานสูงสุด (ย้อนหลัง 3 เดือน) " />
+        <MainTitle title="ผู้ใช้งานสูงสุด (ย้อนหลัง 3 เดือน)" />
 
         {/* Chart */}
         <Box 
@@ -164,7 +162,7 @@ const ChartTopUsers = (props: Props) => {
             <Box className='flex justify-between gap-2'>
               <Box className='flex gap-2 w-50'>
                 <DatePickerBuddhist
-                  value={monthYearSelect ? dayjs(monthYearSelect).toDate() : null}
+                  value={formData.month_year}
                   sx={{
                     marginTop: "5px",
                     borderRadius: "5px",
@@ -179,7 +177,7 @@ const ChartTopUsers = (props: Props) => {
                   className="w-full"
                   id="month-year"
                   onChange={(value) =>
-                    handleDateTimeChange(value)
+                    handleDateTimeChange("month_year", value)
                   }
 
                   label={"เดือนหลัก"}
@@ -361,8 +359,8 @@ const ChartTopUsers = (props: Props) => {
                           <TableCell
                             key={`row-${index}-${usageIndex}`}
                             sx={{
-                              backgroundColor: dayjs(monthYearSelect).format("YYYY-MM") === usage.usageMonthYear ? "#F0F2F5" : "white",
-                              fontWeight: dayjs(monthYearSelect).format("YYYY-MM") === usage.usageMonthYear ? "bold" : "normal",
+                              backgroundColor: dayjs(formData.month_year).format("YYYY-MM") === usage.usageMonthYear ? "#F0F2F5" : "white",
+                              fontWeight: dayjs(formData.month_year).format("YYYY-MM") === usage.usageMonthYear ? "bold" : "normal",
                             }}
                             align="center"
                           >

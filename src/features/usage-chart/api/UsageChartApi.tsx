@@ -1,6 +1,5 @@
 // Types
-import type { AgencyColumn, AgencyChartDataGroup } from "../../../types/common";
-import type { UsageChartResponse, TopUsersResponse } from "../../../types/reponse";
+import type { UsageChartResponse, TopUsersResponse } from "../../../types/response";
 
 // Api
 import { fetchClient } from "../../../api/fetchClient";
@@ -106,7 +105,7 @@ export const getTopUsersChart = async (selectedMonthYear: string, policeState: "
     return policeState === "internal" ? mockTopInternalUsers : mockTopExternalUsers;
   }
 
-  const res = await fetchClient<UsageChartResponse>(
+  const res = await fetchClient<TopUsersResponse>(
     "/statistic/usage-chart",
     {
       method: "POST",
@@ -117,5 +116,5 @@ export const getTopUsersChart = async (selectedMonthYear: string, policeState: "
     },
   );
 
-  return policeState === "internal" ? mockTopInternalUsers : mockTopExternalUsers;
+  return policeState === "internal" ? res : res;
 };

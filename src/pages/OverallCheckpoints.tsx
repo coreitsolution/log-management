@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState, useCallback } from "react";
 import dayjs from "dayjs";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from 'react-redux';
 
 // Material UI
 import Box from "@mui/material/Box";
@@ -20,10 +19,9 @@ import buddhistEra from "dayjs/plugin/buddhistEra";
 // Components
 import MainTitle from "../components/main-title/MainTitle";
 import AutoComplete from "../components/auto-complete/AutoComplete";
-import DatePickerBuddhist from "../components/date-picker-buddhist/DatePickerBuddhist";
 import PaginationComponent from "../components/pagination/Pagination";
-import DetailsDialog from "../components/details-dialog/DetailsDialog";
 import TextBox from "../components/text-box/TextBox";
+import Loading from "../components/loading/Loading";
 
 // Icons
 import ClearIcon from "../assets/icons/clear.png";
@@ -43,51 +41,52 @@ import type { OverallCheckpointsPdfData } from "../types/pdf";
 
 // Utils
 import { exportExcel } from "../utils/exportData";
+import { buildOptions } from "../utils/commonFunctions";
 
 // PDF
 import {
-  generateOverallCheckpointsPdfBlob,
   downloadOverallCheckpointsPdf,
 } from "../pdf/OverallCheckpointPdf";
 
-// Mock Data
-import { mockOverallCheckpoint } from "../mocks/mockOverallCheckpoint";
+// Hooks
+import usePageTitle from "../hooks/usePageTitle";
+
+// Store
+import type { RootState } from "../store/store";
+
+// API
+import { getOverallCheckpoint } from "../features/overall/api/OverallApi";
 
 dayjs.extend(buddhistEra);
 
 interface FormData {
   search: string;
-  area_id: number;
-  province_id: number;
-  project_id: number;
+  area_id: string;
+  province_id: string;
+  project_id: string;
 }
 
-type Props = {}
+const OverallCheckpoints = () => {
+  usePageTitle("รายงานจุดตรวจ");
 
-const OverallCheckpoints = (props: Props) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  
   // State
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Options
-  const [areaOptions, setAreaOptions] = useState<{ label: string, value: number }[]>([]);
-  const [provinceOptions, setProvinceOptions] = useState<{ label: string, value: number }[]>([]);
-  const [projectOptions, setProjectOptions] = useState<{ label: string, value: number }[]>([]);
+  const [areaOptions, setAreaOptions] = useState<{ label: string, value: string }[]>([]);
+  const [provinceOptions, setProvinceOptions] = useState<{ label: string, value: string }[]>([]);
+  const [projectOptions, setProjectOptions] = useState<{ label: string, value: string }[]>([]);
   const [columnOptions, setColumnOptions] = useState<ColumnOption[]>(DEFAULT_COLUMN_OPTIONS);
 
   // Data
   const [totalItems, setTotalItems] = useState(0);
   const [totalUsage, setTotalUsage] = useState(0);
-  const [rows, setRows] = useState<OverallCheckpointType[]>(mockOverallCheckpoint);
+  const [rows, setRows] = useState<OverallCheckpointType[]>([]);
   const [selectedData, setSelectedData] = useState<OverallCheckpointType | null>(null);
 
   // Pagination
   const [page, setPage] = useState(1);
-  const [pageInput, setPageInput] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalData, setTotalData] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(
     ROWS_PER_PAGE_OPTIONS[0],
   );
@@ -98,30 +97,47 @@ const OverallCheckpoints = (props: Props) => {
   // Form Data
   const [formData, setFormData] = useState<FormData>({
     search: "",
-    area_id: 0,
-    province_id: 0,
-    project_id: 0,
+    area_id: "0",
+    province_id: "0",
+    project_id: "0",
   });
 
   const columnKeyMap: Record<string, keyof typeof rows[0]> = {
-    camera: "camera_name",
-    station: "station_name",
-    area: "area_name",
-    province: "province_name",
-    district: "district_name",
-    subdistrict: "subdistrict_name",
-    road: "road",
-    route: "route",
-    project: "project",
+    camera: "name_display",
+    station: "police_checkpoint",
+    area: "police_station",
+    province: "province",
+    district: "district",
+    subdistrict: "sub_district",
+    road: "route",
+    route: "lane",
+    project: "project_name",
   };
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    clearErrors,
-  } = useForm();
+  // Slice
+  const { area, province, project } = useSelector((state: RootState) => state.dropdown);
+
+  useEffect(() => {
+    setAreaOptions(buildOptions(area, "ทุกพื้นที่"));
+    setProvinceOptions(buildOptions(province, "ทุกจังหวัด"));
+    setProjectOptions(buildOptions(project, "ทุกโครงการ"));
+  }, [area, province, project]);
+
+  useEffect(() => {
+    fetchData();
+  }, [formData]);
+
+  const fetchData = useCallback(
+    async () => {
+      setIsLoading(true);
+      const res = await getOverallCheckpoint();
+      setRows(res.data);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500)
+    },
+    []
+  );
 
   const handleTextChange = (key: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -134,14 +150,6 @@ const OverallCheckpoints = (props: Props) => {
   ) => {
     event.preventDefault();
     setFormData((prev) => ({ ...prev, [key]: value?.value ?? 0 }));
-  };
-
-  const handleDateTimeChange = (key: keyof typeof formData, date: Date | null) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      [key]: date,
-    }));
-    setValue(key, date);
   };
 
   const handlePageChange = async (
@@ -160,9 +168,9 @@ const OverallCheckpoints = (props: Props) => {
   const handleClear = () => {
     setFormData({
       search: "",
-      area_id: 0,
-      province_id: 0,
-      project_id: 0,
+      area_id: "0",
+      province_id: "0",
+      project_id: "0",
     });
   }
 
@@ -186,16 +194,16 @@ const OverallCheckpoints = (props: Props) => {
       data: rows,
       mapRow: (data, index) => [
         (page - 1) * rowsPerPage + index + 1,
-        data.checkpoint_name,
-        data.camera_name,
-        data.station_name,
-        data.area_name,
-        data.province_name,
-        data.district_name,
-        data.subdistrict_name,
-        data.road,
-        data.route === 1 ? "เข้า" : "ออก",
-        data.project,
+        data.name_display,
+        data.police_checkpoint,
+        data.police_station,
+        data.police_division_name,
+        data.province,
+        data.district,
+        data.sub_district,
+        data.route,
+        data.lane,
+        data.project_name,
       ],
       columnStyles: {
         2: { alignment: { horizontal: "center" } },
@@ -208,16 +216,16 @@ const OverallCheckpoints = (props: Props) => {
     const pdfData: OverallCheckpointsPdfData[] = rows.map((data) => ({
       ...data,
       id: data.id,
-      checkpoint_name: data.checkpoint_name,
-      camera_name: data.camera_name,
-      station_name: data.station_name,
-      area_name: data.area_name,
-      province_name: data.province_name,
-      district_name: data.district_name,
-      subdistrict_name: data.subdistrict_name,
-      road: data.road,
-      route: data.route === 1 ? "เข้า" : "ออก",
-      project: data.project,
+      checkpoint_name: data.police_checkpoint,
+      camera_name: data.name_display,
+      station_name: data.police_station,
+      area_name: data.police_division_name,
+      province_name: data.province,
+      district_name: data.district,
+      subdistrict_name: data.sub_district,
+      road: data.route,
+      route: data.lane,
+      project: data.project_name,
     }));
     await downloadOverallCheckpointsPdf(
       pdfData,
@@ -240,6 +248,7 @@ const OverallCheckpoints = (props: Props) => {
   return (
     <section id='overall-checkpoint'>
       <Box className='p-4 flex flex-col gap-4'>
+        {isLoading && <Loading />}
         {/* Main Title */}
         <MainTitle title="รายงานจุดตรวจ" />
 
@@ -399,8 +408,8 @@ const OverallCheckpoints = (props: Props) => {
                       }}
                     >
                       <Box className="flex items-center justify-center gap-2">
-                        <img src={data.database_status === 1 ? DatabaseOnline : DatabaseOffline} alt="Database Status" className="h-6 w-6" />
-                        <WifiIcon className="h-6 w-6" color={data.wifi_status === 1 ? "#2FA534" : "#DD2025"} />
+                        <img src={data.data_status === "online" ? DatabaseOnline : DatabaseOffline} alt="Database Status" className="h-6 w-6" />
+                        <WifiIcon className="h-6 w-6" color={data.network_status === "online" ? "#2FA534" : "#DD2025"} />
                       </Box>
                     </TableCell>
                     <TableCell 
@@ -412,16 +421,12 @@ const OverallCheckpoints = (props: Props) => {
                         p: "8px 1px",
                       }}
                     >
-                      {data.checkpoint_name}
+                      {data.name_display}
                     </TableCell>
                     {visibleColumns.map((col) => {
                       const field = columnKeyMap[col.key];
 
                       let value = data[field];
-
-                      if (col.key === "route") {
-                        value = data.route === 1 ? "เข้า" : "ออก";
-                      }
 
                       return (
                         <TableCell 
