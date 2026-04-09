@@ -14,7 +14,7 @@ import { mockSearchLog } from "../../../mocks/mockSearchLog";
 import { mockPersonUsage } from "../../../mocks/mockPersonUsage";
 
 // Env
-const isDev = import.meta.env.DEV;
+const isDev = import.meta.env.VITE_IS_DEV;
 
 export const getSearchAgencyUsage = async (): Promise<SearchAgencyUsageResponse> => {
   if (isDev) {

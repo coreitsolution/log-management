@@ -23,7 +23,7 @@ import {
 } from "../../../mocks/mockOverallReportDetail";
 
 // Env
-const isDev = import.meta.env.DEV;
+const isDev = import.meta.env.VITE_IS_DEV;
 
 export const getOverallCheckpoint = async (): Promise<OverallCheckpointResponse> => {
   if (isDev) {

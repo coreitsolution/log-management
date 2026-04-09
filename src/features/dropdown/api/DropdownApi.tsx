@@ -15,7 +15,7 @@ import { mockProvince } from "../../../mocks/mockProvince";
 import { mockCheckpointType } from "../../../mocks/mockCheckpointType";
 
 // Env
-const isDev = import.meta.env.DEV;
+const isDev = import.meta.env.VITE_IS_DEV;
 
 export const getArea = async (): Promise<DropdownResponse> => {
   if (isDev) {

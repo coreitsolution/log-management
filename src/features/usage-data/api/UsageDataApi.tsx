@@ -14,7 +14,7 @@ import { mockLogUsage } from "../../../mocks/mockLogUsage";
 import { mockPersonUsage } from "../../../mocks/mockPersonUsage";
 
 // Env
-const isDev = import.meta.env.DEV;
+const isDev = import.meta.env.VITE_IS_DEV;
 
 export const getAgencyUsage = async (): Promise<AgencyUsageResponse> => {
   if (isDev) {

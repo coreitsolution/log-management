@@ -23,7 +23,7 @@ import {
 } from "../../../mocks/mockTopUsers";
 
 // Env
-const isDev = import.meta.env.DEV;
+const isDev = import.meta.env.VITE_IS_DEV;
 
 export const getUsageExternalPoliceChart = async (selectedMonthYear: string, monthRange: 1 | 3): Promise<UsageChartResponse> => {
   if (isDev) {
