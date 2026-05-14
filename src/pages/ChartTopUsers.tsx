@@ -145,7 +145,7 @@ const ChartTopUsers = () => {
   };
 
   return (
-    <section id='chart-external-police' className='h-full'>
+    <section id='chart-top-users' className='h-full'>
       <Box className='p-4 flex flex-col gap-4 h-full'>
         {isLoading && <Loading />}
         {/* Main Title */}
